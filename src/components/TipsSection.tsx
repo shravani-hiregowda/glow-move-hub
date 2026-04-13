@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { fitnessTips } from "@/data/workouts";
 
 export default function TipsSection() {
@@ -16,8 +17,8 @@ export default function TipsSection() {
         <p className="text-muted-foreground">Quick tips to maximize your results</p>
       </motion.div>
 
-      <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
-        {fitnessTips.map((tip, i) => (
+      <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 justify-center">
+        {fitnessTips.slice(0, 3).map((tip, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 30 }}
@@ -35,6 +36,20 @@ export default function TipsSection() {
           </motion.div>
         ))}
       </div>
+
+      <motion.div 
+        className="mt-12 text-center"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+      >
+        <Link 
+          to="/tips" 
+          className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl border border-primary/30 text-primary font-display font-semibold hover:bg-primary/10 transition-all group"
+        >
+          View All Tips <span className="group-hover:translate-x-1 transition-transform">→</span>
+        </Link>
+      </motion.div>
     </section>
   );
 }

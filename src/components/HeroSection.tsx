@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Play, Zap, Trophy, Users } from "lucide-react";
-import heroBg from "@/assets/hero-bg.jpg";
+import heroBg from "@/assets/hero-bg-new.png";
 
 interface HeroSectionProps {
   onStartWorkout: () => void;

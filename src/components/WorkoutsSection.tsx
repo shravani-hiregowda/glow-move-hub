@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, SlidersHorizontal } from "lucide-react";
 import WorkoutCard from "./WorkoutCard";
 import type { Workout, Difficulty, BodyPart } from "@/data/workouts";
+import { BODY_PARTS } from "@/data/workouts";
 
 const difficulties: Difficulty[] = ["Beginner", "Intermediate", "Advanced"];
-const bodyParts: BodyPart[] = ["Chest", "Back", "Legs", "Arms", "Core", "Full Body", "Shoulders"];
 
 interface WorkoutsSectionProps {
   workouts: Workout[];
@@ -95,7 +95,7 @@ export default function WorkoutsSection({ workouts, onSelect }: WorkoutsSectionP
                   <label className="text-xs font-medium text-muted-foreground mb-2 block">Body Part</label>
                   <div className="flex flex-wrap gap-2">
                     <Chip label="All" active={bodyFilter === ""} onClick={() => setBodyFilter("")} />
-                    {bodyParts.map((b) => (
+                    {BODY_PARTS.map((b) => (
                       <Chip key={b} label={b} active={bodyFilter === b} onClick={() => setBodyFilter(b)} />
                     ))}
                   </div>

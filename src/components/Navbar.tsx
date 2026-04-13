@@ -1,6 +1,7 @@
 import { Moon, Sun, Dumbbell, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface NavbarProps {
   isDark: boolean;
@@ -18,6 +19,24 @@ const navItems = [
 
 export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigate }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleNavClick = (id: string) => {
+    if (id === "admin") {
+      navigate("/admin");
+    } else if (id === "tips") {
+      navigate("/tips");
+    } else {
+      if (location.pathname !== "/") {
+        navigate("/");
+        // Note: The user will have to scroll manually since they are navigating back from another page.
+      } else {
+        onNavigate(id);
+      }
+    }
+    setMobileOpen(false);
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-strong">
@@ -25,7 +44,7 @@ export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigat
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <motion.button
-            onClick={() => onNavigate("home")}
+            onClick={() => handleNavClick("home")}
             className="flex items-center gap-2 group"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -43,7 +62,7 @@ export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigat
             {navItems.map((item) => (
               <motion.button
                 key={item.id}
-                onClick={() => onNavigate(item.id)}
+                onClick={() => handleNavClick(item.id)}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                   activeSection === item.id
                     ? "bg-primary/10 text-primary neon-text"
@@ -90,7 +109,7 @@ export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigat
               {navItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => { onNavigate(item.id); setMobileOpen(false); }}
+                  onClick={() => handleNavClick(item.id)}
                   className={`block w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                     activeSection === item.id ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"
                   }`}

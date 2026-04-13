@@ -1,36 +1,31 @@
 import { useState, useCallback, useRef } from "react";
 import { useTheme } from "@/hooks/useTheme";
-import { defaultWorkouts, type Workout } from "@/data/workouts";
+import { useWorkoutContext } from "@/contexts/WorkoutContext";
+import { type Workout } from "@/data/workouts";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import FeaturedCarousel from "@/components/FeaturedCarousel";
 import WorkoutsSection from "@/components/WorkoutsSection";
 import TipsSection from "@/components/TipsSection";
-import AdminPanel from "@/components/AdminPanel";
 import WorkoutModal from "@/components/WorkoutModal";
 
-type Section = "home" | "workouts" | "tips" | "admin";
+type Section = "home" | "workouts" | "tips";
 
 export default function Index() {
   const { isDark, toggle } = useTheme();
   const [activeSection, setActiveSection] = useState<Section>("home");
-  const [workouts, setWorkouts] = useState<Workout[]>(defaultWorkouts);
+  const { workouts } = useWorkoutContext();
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
 
   const sectionRefs = {
     home: useRef<HTMLDivElement>(null),
     workouts: useRef<HTMLDivElement>(null),
     tips: useRef<HTMLDivElement>(null),
-    admin: useRef<HTMLDivElement>(null),
   };
 
   const navigateTo = useCallback((section: string) => {
     setActiveSection(section as Section);
     sectionRefs[section as Section]?.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
-  const handleAddWorkout = useCallback((workout: Workout) => {
-    setWorkouts((prev) => [workout, ...prev]);
   }, []);
 
   return (
@@ -49,10 +44,6 @@ export default function Index() {
 
       <div ref={sectionRefs.tips}>
         <TipsSection />
-      </div>
-
-      <div ref={sectionRefs.admin}>
-        <AdminPanel onAddWorkout={handleAddWorkout} />
       </div>
 
       {/* Footer */}
