@@ -5,6 +5,8 @@ import { Lock, User, Key, ArrowRight, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
 import { useTheme } from "@/hooks/useTheme";
+import axios from "axios";
+import { Link } from "react-router-dom";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -15,15 +17,19 @@ export default function Login() {
   const navigate = useNavigate();
   const { isDark, toggle } = useTheme();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === "mainAdmin" && password === "mainAdmin@123") {
+    try {
+      const res = await axios.post("/api/auth/login", { username, password });
       setError(false);
-      login();
-      navigate("/admin");
-    } else {
+      login(res.data.token, res.data.user);
+      if (res.data.user.role === 'admin') {
+        navigate("/admin");
+      } else {
+        navigate("/history");
+      }
+    } catch (err) {
       setError(true);
-      // Small timeout to reset the shake animation trigger
       setTimeout(() => setError(false), 500);
     }
   };
@@ -112,6 +118,15 @@ export default function Login() {
                 Authenticate
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </motion.button>
+              
+              <div className="text-center mt-4">
+                <p className="text-sm text-muted-foreground">
+                  Don't have an account?{" "}
+                  <Link to="/register" className="text-primary hover:underline font-medium">
+                    Register here
+                  </Link>
+                </p>
+              </div>
             </form>
           </motion.div>
         </motion.div>

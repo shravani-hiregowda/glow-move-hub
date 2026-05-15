@@ -6,11 +6,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import TipsPage from "./pages/TipsPage.tsx";
 import Login from "./pages/Login.tsx";
+import Register from "./pages/Register.tsx";
+import HistoryPage from "./pages/HistoryPage.tsx";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -24,8 +27,16 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/tips" element={<TipsPage />} />
+          
+          {/* Regular Authenticated Routes */}
           <Route element={<ProtectedRoute />}>
+            <Route path="/history" element={<HistoryPage />} />
+          </Route>
+
+          {/* Admin Only Routes */}
+          <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminDashboard />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
