@@ -144,13 +144,13 @@ npm run dev:api
 ```
 The server will start at `http://localhost:3000`.
 
-### 2. Start the Frontend Web App (Port 8080)
+### 2. Start the Frontend Web App (Port 5173)
 
 In a separate terminal:
 ```bash
 npm run dev:web
 ```
-Open `http://localhost:8080` in your browser.
+Open `http://localhost:5173` in your browser.
 
 ---
 
@@ -252,17 +252,24 @@ Delete a workout. Cascades to steps. Requires authenticated session with `ADMIN`
 
 ### Administrator Bootstrap
 
-The application does not ship default administrator credentials or a public promotion endpoint. To create the initial administrator securely:
+The application does not ship default administrator credentials or a public promotion endpoint. To create the initial administrator securely without exposing the password in shell history or process tables:
 
 ```bash
-ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=YourStrongSecret123! npm run admin:bootstrap
+npm run admin:bootstrap
 ```
 
+The script will interactively prompt for:
+1. Administrator Email
+2. Administrator Password (hidden input, suppressing terminal echo)
+
+*(For automated testing and CI pipelines only, non-interactive mode is also supported by supplying `ADMIN_EMAIL` and `ADMIN_PASSWORD` via environment variables).*
+
 The bootstrap script:
-- Validates the email and password format.
-- Checks if an administrator already exists; if so, safely aborts without overwriting.
+- Refuses to prompt or overwrite if an administrator already exists in the database.
+- Validates the email and password format using strict Zod schemas.
+- Refuses unexpected overwrite if the email is already in use by a `MEMBER`.
 - Hashes credentials with Argon2id and inserts an `ADMIN` user.
-- Never prints the password or session tokens to logs or stdout.
+- Never prints the password or session tokens to logs, traces, or stdout.
 
 ---
 

@@ -437,6 +437,30 @@ describe("JERAI FIT API — Authentication & Security Tests", () => {
       delete process.env.ADMIN_EMAIL;
       delete process.env.ADMIN_PASSWORD;
     });
+
+    it("supports passing options directly to bootstrapAdmin without environment variable exposure", async () => {
+      const { bootstrapAdmin } = await import("../scripts/bootstrap-admin");
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+      mockUserCreate.mockResolvedValueOnce({
+        id: "u-direct-admin",
+        email: "direct.admin@example.com",
+        role: "ADMIN",
+      } as never);
+
+      await bootstrapAdmin({
+        email: "direct.admin@example.com",
+        password: "DirectSecurePass123!",
+      });
+
+      expect(prisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            email: "direct.admin@example.com",
+            role: "ADMIN",
+          }),
+        })
+      );
+    });
   });
 });
-

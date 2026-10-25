@@ -1,8 +1,12 @@
+import path from "node:path";
 import dotenv from "dotenv";
 import { z } from "zod";
 
-// Load environment variables from .env if present
+// Load environment variables from local or monorepo root .env
 dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
