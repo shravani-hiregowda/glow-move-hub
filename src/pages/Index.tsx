@@ -17,32 +17,35 @@ export default function Index() {
   const { workouts } = useWorkoutContext();
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
 
-  const sectionRefs = {
-    home: useRef<HTMLDivElement>(null),
-    workouts: useRef<HTMLDivElement>(null),
-    tips: useRef<HTMLDivElement>(null),
-  };
+  const homeRef = useRef<HTMLDivElement>(null);
+  const workoutsRef = useRef<HTMLDivElement>(null);
+  const tipsRef = useRef<HTMLDivElement>(null);
 
   const navigateTo = useCallback((section: string) => {
     setActiveSection(section as Section);
-    sectionRefs[section as Section]?.current?.scrollIntoView({ behavior: "smooth" });
+    const targetMap: Record<string, React.RefObject<HTMLDivElement>> = {
+      home: homeRef,
+      workouts: workoutsRef,
+      tips: tipsRef,
+    };
+    targetMap[section]?.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar isDark={isDark} onToggleTheme={toggle} activeSection={activeSection} onNavigate={navigateTo} />
 
-      <div ref={sectionRefs.home}>
+      <div ref={homeRef}>
         <HeroSection onStartWorkout={() => navigateTo("workouts")} workoutCount={workouts.length} />
       </div>
 
       <FeaturedCarousel workouts={workouts} onSelect={setSelectedWorkout} />
 
-      <div ref={sectionRefs.workouts}>
+      <div ref={workoutsRef}>
         <WorkoutsSection workouts={workouts} onSelect={setSelectedWorkout} />
       </div>
 
-      <div ref={sectionRefs.tips}>
+      <div ref={tipsRef}>
         <TipsSection />
       </div>
 

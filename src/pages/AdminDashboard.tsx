@@ -12,7 +12,7 @@ import { defaultWorkouts } from "@/data/workouts";
 
 export default function AdminDashboard() {
   const { isDark, toggle } = useTheme();
-  const { workouts, deleteWorkout, addWorkout, updateWorkout } = useWorkoutContext();
+  const { workouts, deleteWorkout, addWorkout, updateWorkout, restoreDefaults, storageError } = useWorkoutContext();
   const { logout } = useAuth();
   
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
@@ -21,8 +21,7 @@ export default function AdminDashboard() {
 
   const handleResetDefaults = () => {
     if (window.confirm("Are you sure you want to completely reset all workouts to the default set?")) {
-      localStorage.setItem("workouts", JSON.stringify(defaultWorkouts));
-      window.location.reload();
+      restoreDefaults();
     }
   };
 
@@ -73,6 +72,12 @@ export default function AdminDashboard() {
             </Link>
           </div>
         </motion.div>
+
+        {storageError && (
+          <div className="mb-6 p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
+            {storageError}
+          </div>
+        )}
 
         {(isAdding || editingWorkout) ? (
           <WorkoutForm 

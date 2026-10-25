@@ -23,12 +23,17 @@ const emptyForm = {
   image: "",
 };
 
+type FormFieldKey = keyof typeof emptyForm;
+type FormFieldValue = string | number | Difficulty | BodyPart | string[];
+
 export default function WorkoutForm({ initialData, onSave, onCancel }: WorkoutFormProps) {
   const [form, setForm] = useState(emptyForm);
   const [showPreview, setShowPreview] = useState(false);
   const [cropSource, setCropSource] = useState<string>("");
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
@@ -37,7 +42,10 @@ export default function WorkoutForm({ initialData, onSave, onCancel }: WorkoutFo
     }
   }, [initialData]);
 
-  const updateField = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
+  const updateField = (key: FormFieldKey, value: FormFieldValue) => {
+    setErrorMessage(null);
+    setForm((f) => ({ ...f, [key]: value }));
+  };
 
   const updateStep = (i: number, val: string) => {
     const newSteps = [...form.steps];
@@ -49,15 +57,29 @@ export default function WorkoutForm({ initialData, onSave, onCancel }: WorkoutFo
   const removeStep = (i: number) => setForm((f) => ({ ...f, steps: f.steps.filter((_, idx) => idx !== i) }));
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setImageError(null);
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCropSource(reader.result as string);
-        setCrop(undefined);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setImageError("Please upload a valid image file (PNG, JPG, or WEBP).");
+      return;
     }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError("Image file size exceeds the 5MB limit.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCropSource(reader.result as string);
+      setCrop(undefined);
+    };
+    reader.onerror = () => {
+      setImageError("Failed to read the selected image file.");
+    };
+    reader.readAsDataURL(file);
   };
 
   const centerAspectCrop = (mediaWidth: number, mediaHeight: number, aspect: number) => {
@@ -83,45 +105,81 @@ export default function WorkoutForm({ initialData, onSave, onCancel }: WorkoutFo
 
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
-    const pixelRatio = window.devicePixelRatio;
 
-    canvas.width = Math.floor(completedCrop.width * scaleX * pixelRatio);
-    canvas.height = Math.floor(completedCrop.height * scaleY * pixelRatio);
+    // Constrain output dimensions to keep localStorage payload compact (max 800px)
+    const rawWidth = Math.floor(completedCrop.width * scaleX);
+    const rawHeight = Math.floor(completedCrop.height * scaleY);
+    const maxDim = 800;
+    let targetWidth = rawWidth;
+    let targetHeight = rawHeight;
+    if (targetWidth > maxDim || targetHeight > maxDim) {
+      const scale = Math.min(maxDim / targetWidth, maxDim / targetHeight);
+      targetWidth = Math.round(targetWidth * scale);
+      targetHeight = Math.round(targetHeight * scale);
+    }
 
-    ctx.scale(pixelRatio, pixelRatio);
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
     ctx.imageSmoothingQuality = "high";
 
     const cropX = completedCrop.x * scaleX;
     const cropY = completedCrop.y * scaleY;
 
-    ctx.translate(-cropX, -cropY);
     ctx.drawImage(
       image,
+      cropX,
+      cropY,
+      completedCrop.width * scaleX,
+      completedCrop.height * scaleY,
       0,
       0,
-      image.naturalWidth,
-      image.naturalHeight,
-      0,
-      0,
-      image.naturalWidth,
-      image.naturalHeight
+      targetWidth,
+      targetHeight
     );
 
-    const base64Image = canvas.toDataURL("image/webp", 0.9);
+    const base64Image = canvas.toDataURL("image/webp", 0.85);
     updateField("image", base64Image);
     setCropSource("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title || !form.duration) return;
-    
+    setErrorMessage(null);
+
+    const trimmedTitle = form.title.trim();
+    if (!trimmedTitle) {
+      setErrorMessage("Workout title is required.");
+      return;
+    }
+
+    const trimmedDuration = form.duration.trim();
+    if (!trimmedDuration) {
+      setErrorMessage("Workout duration is required (e.g. '15 min').");
+      return;
+    }
+
+    const cal = Number(form.calories);
+    if (isNaN(cal) || cal < 0) {
+      setErrorMessage("Calories must be a valid positive number.");
+      return;
+    }
+
+    if (form.videoUrl && !/^https?:\/\//i.test(form.videoUrl.trim())) {
+      setErrorMessage("Video URL must be a valid web URL starting with http:// or https://");
+      return;
+    }
+
+    const sanitizedSteps = form.steps.map((s) => s.trim()).filter(Boolean);
+
     onSave({
       ...form,
+      title: trimmedTitle,
+      duration: trimmedDuration,
       id: initialData ? initialData.id : Date.now().toString(),
-      calories: Number(form.calories),
+      calories: cal,
+      videoUrl: form.videoUrl.trim(),
       image: form.image || "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=640",
-      steps: form.steps.filter(Boolean),
+      steps: sanitizedSteps.length > 0 ? sanitizedSteps : ["Follow instructor instructions carefully"],
     });
   };
 
@@ -211,6 +269,9 @@ export default function WorkoutForm({ initialData, onSave, onCancel }: WorkoutFo
               </div>
             </div>
           )}
+          {imageError && (
+            <p className="text-xs text-destructive mt-1.5 font-medium">{imageError}</p>
+          )}
         </div>
 
         <div>
@@ -236,6 +297,12 @@ export default function WorkoutForm({ initialData, onSave, onCancel }: WorkoutFo
             <Plus className="w-4 h-4" /> Add step
           </button>
         </div>
+
+        {errorMessage && (
+          <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
+            {errorMessage}
+          </div>
+        )}
 
         <div className="flex gap-3 pt-2">
           <motion.button
@@ -373,16 +440,22 @@ function FloatingInput({
   onChange: (v: string) => void;
   type?: string;
 }) {
+  const inputId = label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   return (
     <div className="relative">
       <input
+        id={inputId}
+        aria-label={label}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder=" "
         className="peer w-full px-4 pt-6 pb-2 rounded-xl bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all"
       />
-      <label className="absolute left-4 top-2 text-xs text-muted-foreground peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-xs transition-all pointer-events-none">
+      <label
+        htmlFor={inputId}
+        className="absolute left-4 top-2 text-xs text-muted-foreground peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-xs transition-all pointer-events-none"
+      >
         {label}
       </label>
     </div>
