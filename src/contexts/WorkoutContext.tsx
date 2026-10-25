@@ -19,9 +19,9 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined" || !window.localStorage) {
       return defaultWorkouts;
     }
-    const saved = localStorage.getItem("workouts");
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem("workouts");
+      if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
           const validWorkouts = parsed.filter(
@@ -38,14 +38,17 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
           // ignore backup failure if quota blocked
         }
         console.warn("Stored workouts data was not a valid array; created backup in workouts_corrupted_backup");
-      } catch (e) {
-        try {
-          localStorage.setItem("workouts_corrupted_backup", saved);
-        } catch {
-          // ignore backup failure if quota blocked
-        }
-        console.error("Failed to parse workouts from localStorage; created backup in workouts_corrupted_backup", e);
       }
+    } catch (e) {
+      try {
+        const saved = localStorage.getItem("workouts");
+        if (saved) {
+          localStorage.setItem("workouts_corrupted_backup", saved);
+        }
+      } catch {
+        // ignore backup failure if storage blocked
+      }
+      console.error("Failed to read workouts from localStorage; created backup if possible", e);
     }
     return defaultWorkouts;
   });

@@ -3,8 +3,14 @@ import { useState, useEffect } from "react";
 export function useTheme() {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("theme") === "dark" || 
-        (!localStorage.getItem("theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      try {
+        const saved = localStorage.getItem("theme");
+        if (saved === "dark") return true;
+        if (saved === "light") return false;
+        return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? true;
+      } catch {
+        return true;
+      }
     }
     return true;
   });
@@ -13,10 +19,18 @@ export function useTheme() {
     const root = document.documentElement;
     if (isDark) {
       root.classList.add("dark");
-      localStorage.setItem("theme", "dark");
+      try {
+        localStorage.setItem("theme", "dark");
+      } catch {
+        // ignore storage write errors
+      }
     } else {
       root.classList.remove("dark");
-      localStorage.setItem("theme", "light");
+      try {
+        localStorage.setItem("theme", "light");
+      } catch {
+        // ignore storage write errors
+      }
     }
   }, [isDark]);
 

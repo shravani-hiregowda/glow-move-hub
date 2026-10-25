@@ -142,4 +142,18 @@ describe("WorkoutContext State & Persistence", () => {
     setItemSpy.mockRestore();
     errorSpy.mockRestore();
   });
+
+  it("safely handles storage read exceptions (e.g. SecurityError in private browsing) by falling back to defaults", () => {
+    const getItemSpy = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new DOMException("Access is denied", "SecurityError");
+    });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const { result } = renderHook(() => useWorkoutContext(), { wrapper });
+
+    expect(result.current.workouts).toHaveLength(defaultWorkouts.length);
+
+    getItemSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
 });

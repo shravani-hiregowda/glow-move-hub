@@ -137,9 +137,14 @@ export default function WorkoutForm({ initialData, onSave, onCancel }: WorkoutFo
       targetHeight
     );
 
-    const base64Image = canvas.toDataURL("image/webp", 0.85);
-    updateField("image", base64Image);
-    setCropSource("");
+    try {
+      const base64Image = canvas.toDataURL("image/webp", 0.85);
+      updateField("image", base64Image);
+      setCropSource("");
+    } catch {
+      setImageError("Failed to process cropped image. Please choose another image.");
+      setCropSource("");
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {

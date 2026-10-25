@@ -14,21 +14,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Check local storage on initial chunk load
-    const savedState = localStorage.getItem("glow_move_auth_token");
-    if (savedState === "authenticated") {
-      setIsAuthenticated(true);
+    try {
+      const savedState = localStorage.getItem("glow_move_auth_token");
+      if (savedState === "authenticated") {
+        setIsAuthenticated(true);
+      }
+    } catch {
+      // ignore storage access errors
     }
     setIsLoading(false);
   }, []);
 
   const login = () => {
     setIsAuthenticated(true);
-    localStorage.setItem("glow_move_auth_token", "authenticated");
+    try {
+      localStorage.setItem("glow_move_auth_token", "authenticated");
+    } catch {
+      // ignore storage access errors
+    }
   };
 
   const logout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem("glow_move_auth_token");
+    try {
+      localStorage.removeItem("glow_move_auth_token");
+    } catch {
+      // ignore storage access errors
+    }
   };
 
   if (isLoading) return null; // Avoid flicker during boot check
