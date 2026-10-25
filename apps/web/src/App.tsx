@@ -14,28 +14,28 @@ import Login from "./pages/Login.tsx";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <AuthProvider>
-    <WorkoutProvider>
-      <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/tips" element={<TipsPage />} />
-          <Route element={<ProtectedRoute />}>
-            <Route path="/admin" element={<AdminDashboard />} />
-          </Route>
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <WorkoutProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/tips" element={<TipsPage />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+              </Route>
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </WorkoutProvider>
+    </AuthProvider>
   </QueryClientProvider>
-  </WorkoutProvider>
-  </AuthProvider>
 );
 
 export default App;

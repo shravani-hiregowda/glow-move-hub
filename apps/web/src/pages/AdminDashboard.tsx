@@ -12,7 +12,7 @@ import { defaultWorkouts } from "@/data/workouts";
 
 export default function AdminDashboard() {
   const { isDark, toggle } = useTheme();
-  const { workouts, deleteWorkout, addWorkout, updateWorkout, restoreDefaults, storageError } = useWorkoutContext();
+  const { workouts, deleteWorkout, addWorkout, updateWorkout, restoreDefaults, storageError, mutationError } = useWorkoutContext();
   const { logout } = useAuth();
   
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
@@ -72,6 +72,12 @@ export default function AdminDashboard() {
             </Link>
           </div>
         </motion.div>
+
+        {mutationError && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-sm font-medium">
+            ⚠️ {mutationError}
+          </div>
+        )}
 
         {storageError && (
           <div className="mb-6 p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">

@@ -14,7 +14,7 @@ type Section = "home" | "workouts" | "tips";
 export default function Index() {
   const { isDark, toggle } = useTheme();
   const [activeSection, setActiveSection] = useState<Section>("home");
-  const { workouts } = useWorkoutContext();
+  const { workouts, isLoading, isError, error, refetchWorkouts } = useWorkoutContext();
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
 
   const homeRef = useRef<HTMLDivElement>(null);
@@ -42,7 +42,14 @@ export default function Index() {
       <FeaturedCarousel workouts={workouts} onSelect={setSelectedWorkout} />
 
       <div ref={workoutsRef}>
-        <WorkoutsSection workouts={workouts} onSelect={setSelectedWorkout} />
+        <WorkoutsSection
+          workouts={workouts}
+          onSelect={setSelectedWorkout}
+          isLoading={isLoading}
+          isError={isError}
+          errorMessage={error?.message}
+          onRetry={refetchWorkouts}
+        />
       </div>
 
       <div ref={tipsRef}>

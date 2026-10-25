@@ -10,9 +10,20 @@ const difficulties: Difficulty[] = ["Beginner", "Intermediate", "Advanced"];
 interface WorkoutsSectionProps {
   workouts: Workout[];
   onSelect: (w: Workout) => void;
+  isLoading?: boolean;
+  isError?: boolean;
+  errorMessage?: string;
+  onRetry?: () => void;
 }
 
-export default function WorkoutsSection({ workouts, onSelect }: WorkoutsSectionProps) {
+export default function WorkoutsSection({
+  workouts,
+  onSelect,
+  isLoading,
+  isError,
+  errorMessage,
+  onRetry,
+}: WorkoutsSectionProps) {
   const [search, setSearch] = useState("");
   const [diffFilter, setDiffFilter] = useState<Difficulty | "">("");
   const [bodyFilter, setBodyFilter] = useState<BodyPart | "">("");
@@ -106,16 +117,50 @@ export default function WorkoutsSection({ workouts, onSelect }: WorkoutsSectionP
         </AnimatePresence>
       </motion.div>
 
-      {/* Grid */}
-      <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <AnimatePresence mode="popLayout">
-          {filtered.map((w, i) => (
-            <WorkoutCard key={w.id} workout={w} index={i} onClick={() => onSelect(w)} />
-          ))}
-        </AnimatePresence>
-      </motion.div>
+      {/* Error state */}
+      {isError && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-6 rounded-2xl bg-destructive/10 border border-destructive/20 text-center max-w-lg mx-auto mb-8"
+        >
+          <p className="text-destructive font-medium mb-2">Failed to load workouts from server</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {errorMessage || "Database connection unavailable. Showing cached data if available."}
+          </p>
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              className="px-4 py-2 text-sm rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+            >
+              Retry Connection
+            </button>
+          )}
+        </motion.div>
+      )}
 
-      {filtered.length === 0 && (
+      {/* Loading Skeleton */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((idx) => (
+            <div
+              key={idx}
+              className="h-80 rounded-2xl bg-secondary/60 animate-pulse border border-border"
+            />
+          ))}
+        </div>
+      ) : (
+        /* Grid */
+        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <AnimatePresence mode="popLayout">
+            {filtered.map((w, i) => (
+              <WorkoutCard key={w.id} workout={w} index={i} onClick={() => onSelect(w)} />
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      )}
+
+      {!isLoading && filtered.length === 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

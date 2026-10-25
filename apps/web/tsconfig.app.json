@@ -19,6 +19,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@jerai/shared": [
+        "../../packages/shared/src/index.ts"
+      ],
+      "@jerai/shared/*": [
+        "../../packages/shared/src/*"
       ]
     },
     "skipLibCheck": true,

@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Workout {
+  id          String        @id @default(uuid())
+  title       String        @db.VarChar(100)
+  description String        @db.Text
+  difficulty  String        @db.VarChar(50)
+  bodyPart    String        @map("body_part") @db.VarChar(50)
+  duration    String        @db.VarChar(50)
+  calories    Int
+  videoUrl    String        @map("video_url") @db.VarChar(500)
+  image       String        @db.VarChar(2000)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  steps       WorkoutStep[]
+
+  @@index([bodyPart])
+  @@index([difficulty])
+  @@map("workouts")
+}
+
+model WorkoutStep {
+  id          String   @id @default(uuid())
+  workoutId   String   @map("workout_id")
+  stepOrder   Int      @map("step_order")
+  instruction String   @db.Text
+  workout     Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+
+  @@unique([workoutId, stepOrder])
+  @@index([workoutId])
+  @@map("workout_steps")
+}
