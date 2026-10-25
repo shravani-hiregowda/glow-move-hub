@@ -7,6 +7,7 @@ import {
   deleteWorkout,
 } from "../controllers/workout.controller";
 import { validateRequest } from "../middleware/validate.middleware";
+import { requireRole } from "../middleware/auth.middleware";
 import {
   createWorkoutSchema,
   updateWorkoutSchema,
@@ -16,6 +17,7 @@ import {
 
 const router = Router();
 
+// Public read-only endpoints
 router.get(
   "/workouts",
   validateRequest({ query: workoutFilterQuerySchema }),
@@ -28,20 +30,24 @@ router.get(
   getWorkoutById
 );
 
+// Protected ADMIN-only mutation endpoints
 router.post(
   "/workouts",
+  requireRole("ADMIN"),
   validateRequest({ body: createWorkoutSchema }),
   createWorkout
 );
 
 router.put(
   "/workouts/:id",
+  requireRole("ADMIN"),
   validateRequest({ params: workoutIdParamSchema, body: updateWorkoutSchema }),
   updateWorkout
 );
 
 router.delete(
   "/workouts/:id",
+  requireRole("ADMIN"),
   validateRequest({ params: workoutIdParamSchema }),
   deleteWorkout
 );

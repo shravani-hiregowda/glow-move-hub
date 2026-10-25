@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import request from "supertest";
 import { app } from "../app";
 import { prisma } from "../db/client";
-import { env } from "../config/env";
+import { SESSION_COOKIE_NAME, CSRF_COOKIE_NAME } from "../utils/session";
+
 
 // Mock prisma methods
 vi.mock("../db/client", () => {
@@ -21,6 +22,17 @@ vi.mock("../db/client", () => {
       workoutStep: {
         deleteMany: vi.fn(),
         createMany: vi.fn(),
+      },
+      user: {
+        findUnique: vi.fn(),
+        findFirst: vi.fn(),
+        create: vi.fn(),
+      },
+      session: {
+        findUnique: vi.fn(),
+        create: vi.fn(),
+        delete: vi.fn(),
+        deleteMany: vi.fn(),
       },
       $disconnect: vi.fn(),
     },
@@ -167,9 +179,8 @@ describe("JERAI FIT API — Endpoints and Security Tests", () => {
     });
   });
 
-  describe("Write Access Security Guard (Fail-Closed)", () => {
-    it("denies POST /api/v1/workouts with 403 when ALLOW_LOCAL_DEV_WRITES is false", async () => {
-      // Default test env has ALLOW_LOCAL_DEV_WRITES = false
+  describe("Server-Enforced Role-Based Access Control (RBAC)", () => {
+    it("denies anonymous POST /api/v1/workouts with 401 UNAUTHORIZED", async () => {
       const res = await request(app)
         .post("/api/v1/workouts")
         .send({
@@ -184,38 +195,84 @@ describe("JERAI FIT API — Endpoints and Security Tests", () => {
           steps: ["Step 1"],
         });
 
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
-      expect(res.body.error.code).toBe("WRITES_DISABLED");
+      expect(res.body.error.code).toBe("UNAUTHORIZED");
     });
 
-    it("denies PUT /api/v1/workouts/:id with 403 when guard is closed", async () => {
+    it("denies anonymous PUT /api/v1/workouts/:id with 401 UNAUTHORIZED", async () => {
       const res = await request(app)
         .put("/api/v1/workouts/w-1")
         .send({ title: "Updated Title" });
 
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
-      expect(res.body.error.code).toBe("WRITES_DISABLED");
+      expect(res.body.error.code).toBe("UNAUTHORIZED");
     });
 
-    it("denies DELETE /api/v1/workouts/:id with 403 when guard is closed", async () => {
+    it("denies anonymous DELETE /api/v1/workouts/:id with 401 UNAUTHORIZED", async () => {
       const res = await request(app).delete("/api/v1/workouts/w-1");
 
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
-      expect(res.body.error.code).toBe("WRITES_DISABLED");
+      expect(res.body.error.code).toBe("UNAUTHORIZED");
     });
 
-    it("allows write operations when ALLOW_LOCAL_DEV_WRITES is true in non-production", async () => {
-      const originalFlag = env.ALLOW_LOCAL_DEV_WRITES;
-      const mutableEnv = env as { NODE_ENV: string; ALLOW_LOCAL_DEV_WRITES: boolean };
-      mutableEnv.ALLOW_LOCAL_DEV_WRITES = true;
+    it("denies authenticated MEMBER from performing write operations with 403 FORBIDDEN", async () => {
+      const futureDate = new Date(Date.now() + 1000 * 60 * 60);
+      vi.mocked(prisma.session.findUnique).mockResolvedValue({
+        id: "sess-member",
+        userId: "u-member",
+        tokenHash: "any-hash",
+        expiresAt: futureDate,
+        createdAt: new Date(),
+        user: {
+          id: "u-member",
+          email: "member@example.com",
+          role: "MEMBER",
+        },
+      } as never);
+
+      const res = await request(app)
+        .post("/api/v1/workouts")
+        .set("Cookie", [`${SESSION_COOKIE_NAME}=valid-member-token`, `${CSRF_COOKIE_NAME}=valid-csrf-token`])
+        .set("x-csrf-token", "valid-csrf-token")
+        .send({
+          title: "Member Workout",
+          description: "Desc",
+          difficulty: "Beginner",
+          bodyPart: "Chest",
+          duration: "10 min",
+          calories: 100,
+          videoUrl: "",
+          image: "/assets/workout-1.jpg",
+          steps: ["Step 1"],
+        });
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe("FORBIDDEN");
+    });
+
+    it("allows authenticated ADMIN to perform workout create operations", async () => {
+      const futureDate = new Date(Date.now() + 1000 * 60 * 60);
+      vi.mocked(prisma.session.findUnique).mockResolvedValue({
+        id: "sess-admin",
+        userId: "u-admin",
+        tokenHash: "admin-hash",
+        expiresAt: futureDate,
+        createdAt: new Date(),
+        user: {
+          id: "u-admin",
+          email: "admin@example.com",
+          role: "ADMIN",
+        },
+      } as never);
 
       const mockCreated = {
         id: "w-new",
-        title: "New Workout",
-        description: "New Desc",
+        title: "Admin Workout",
+        description: "Admin Desc",
         difficulty: "Beginner",
         bodyPart: "Chest",
         duration: "10 min",
@@ -231,9 +288,11 @@ describe("JERAI FIT API — Endpoints and Security Tests", () => {
 
       const res = await request(app)
         .post("/api/v1/workouts")
+        .set("Cookie", [`${SESSION_COOKIE_NAME}=valid-admin-token`, `${CSRF_COOKIE_NAME}=valid-csrf-token`])
+        .set("x-csrf-token", "valid-csrf-token")
         .send({
-          title: "New Workout",
-          description: "New Desc",
+          title: "Admin Workout",
+          description: "Admin Desc",
           difficulty: "Beginner",
           bodyPart: "Chest",
           duration: "10 min",
@@ -246,27 +305,9 @@ describe("JERAI FIT API — Endpoints and Security Tests", () => {
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data.id).toBe("w-new");
-
-      mutableEnv.ALLOW_LOCAL_DEV_WRITES = originalFlag;
-    });
-
-    it("refuses writes in production even if ALLOW_LOCAL_DEV_WRITES was somehow set", async () => {
-      const originalEnv = env.NODE_ENV;
-      const originalFlag = env.ALLOW_LOCAL_DEV_WRITES;
-      const mutableEnv = env as { NODE_ENV: string; ALLOW_LOCAL_DEV_WRITES: boolean };
-      mutableEnv.NODE_ENV = "production";
-      mutableEnv.ALLOW_LOCAL_DEV_WRITES = true;
-
-      const res = await request(app)
-        .delete("/api/v1/workouts/w-1");
-
-      expect(res.status).toBe(403);
-      expect(res.body.error.code).toBe("WRITES_DISABLED_PRODUCTION");
-
-      mutableEnv.NODE_ENV = originalEnv;
-      mutableEnv.ALLOW_LOCAL_DEV_WRITES = originalFlag;
     });
   });
+
 
   describe("Safe Error Handling", () => {
     it("handles database errors without exposing stack traces or internals", async () => {

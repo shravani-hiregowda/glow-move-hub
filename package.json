@@ -18,6 +18,7 @@
     "test:shared": "npm run test --workspace=@jerai/shared",
     "test:web": "npm run test --workspace=@jerai/web",
     "test:api": "npm run test --workspace=@jerai/api",
+    "admin:bootstrap": "npm run admin:bootstrap --workspace=@jerai/api",
     "typecheck": "npm run typecheck --workspace=@jerai/shared && npm run typecheck --workspace=@jerai/api && npm run typecheck --workspace=@jerai/web"
   },
   "devDependencies": {

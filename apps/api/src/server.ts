@@ -4,7 +4,7 @@ import { disconnectDatabase } from "./db/client";
 
 const server = app.listen(env.PORT, () => {
   console.log(`[JERAI FIT API] Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
-  console.log(`[JERAI FIT API] Local dev writes: ${env.ALLOW_LOCAL_DEV_WRITES ? "ENABLED" : "DISABLED (fail-closed)"}`);
+  console.log("[JERAI FIT API] Security: Session-based Auth & RBAC active");
 });
 
 async function handleShutdown(signal: string) {

@@ -5,6 +5,10 @@ import type {
   WorkoutFilterQuery,
   HealthResponse,
   PaginatedResponse,
+  UserDto,
+  AuthResponse,
+  LoginInput,
+  RegisterInput,
 } from "@jerai/shared";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
@@ -23,16 +27,45 @@ export class ApiError extends Error {
   }
 }
 
+let inMemoryCsrfToken: string | null = null;
+
+export function setCsrfToken(token: string | null): void {
+  inMemoryCsrfToken = token;
+}
+
+export function getCsrfToken(): string | null {
+  if (inMemoryCsrfToken) {
+    return inMemoryCsrfToken;
+  }
+  if (typeof document !== "undefined") {
+    const match = document.cookie.match(/(?:^|;\s*)jerai_csrf=([^;]+)/);
+    if (match) {
+      return decodeURIComponent(match[1]);
+    }
+  }
+  return null;
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  const headers = {
+  const method = (options.method || "GET").toUpperCase();
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(options.headers || {}),
+    ...((options.headers as Record<string, string>) || {}),
   };
+
+  // Attach anti-CSRF token to state-changing requests
+  if (["POST", "PUT", "DELETE", "PATCH"].includes(method)) {
+    const csrf = getCsrfToken();
+    if (csrf) {
+      headers["X-CSRF-Token"] = csrf;
+    }
+  }
 
   const response = await fetch(url, {
     ...options,
     headers,
+    credentials: "include", // Ensure session and CSRF cookies are included
   });
 
   const isJson = response.headers.get("content-type")?.includes("application/json");
@@ -42,6 +75,11 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     const errorMsg = data?.error?.message || response.statusText || "Request failed";
     const errorCode = data?.error?.code || `HTTP_${response.status}`;
     throw new ApiError(errorMsg, response.status, errorCode, data?.error?.details);
+  }
+
+  // Update in-memory CSRF token if returned in response data
+  if (data?.data?.csrfToken) {
+    setCsrfToken(data.data.csrfToken);
   }
 
   return data;
@@ -92,5 +130,56 @@ export const api = {
     await request<void>(`/workouts/${encodeURIComponent(id)}`, {
       method: "DELETE",
     });
+  },
+
+  // Authentication endpoints
+  async login(credentials: LoginInput): Promise<AuthResponse> {
+    const res = await request<{ data: AuthResponse }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(credentials),
+    });
+    if (res.data?.csrfToken) {
+      setCsrfToken(res.data.csrfToken);
+    }
+    return res.data;
+  },
+
+  async register(input: RegisterInput): Promise<AuthResponse> {
+    const res = await request<{ data: AuthResponse }>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+    if (res.data?.csrfToken) {
+      setCsrfToken(res.data.csrfToken);
+    }
+    return res.data;
+  },
+
+  async getMe(): Promise<{ user: UserDto; csrfToken?: string }> {
+    const res = await request<{ data: { user: UserDto; csrfToken?: string } }>("/auth/me");
+    if (res.data?.csrfToken) {
+      setCsrfToken(res.data.csrfToken);
+    }
+    return res.data;
+  },
+
+  async logout(): Promise<void> {
+    await request<{ success: boolean }>("/auth/logout", {
+      method: "POST",
+    });
+    setCsrfToken(null);
+  },
+
+  async fetchCsrfToken(): Promise<string | null> {
+    try {
+      const res = await request<{ data: { csrfToken: string } }>("/auth/csrf");
+      if (res.data?.csrfToken) {
+        setCsrfToken(res.data.csrfToken);
+        return res.data.csrfToken;
+      }
+    } catch {
+      // ignore
+    }
+    return null;
   },
 };

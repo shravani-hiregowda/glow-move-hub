@@ -82,3 +82,33 @@ export type CreateWorkoutInput = z.infer<typeof createWorkoutSchema>;
 export type UpdateWorkoutInput = z.infer<typeof updateWorkoutSchema>;
 export type WorkoutFilterQueryInput = z.infer<typeof workoutFilterQuerySchema>;
 export type WorkoutIdParamInput = z.infer<typeof workoutIdParamSchema>;
+
+export const roleSchema = z.enum(["MEMBER", "ADMIN"]);
+
+export const emailSchema = z
+  .string({ required_error: "Email is required" })
+  .trim()
+  .toLowerCase()
+  .email("Invalid email format")
+  .max(255, "Email cannot exceed 255 characters");
+
+export const passwordSchema = z
+  .string({ required_error: "Password is required" })
+  .min(8, "Password must be at least 8 characters")
+  .max(128, "Password cannot exceed 128 characters");
+
+export const registerSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z
+    .string({ required_error: "Password is required" })
+    .min(1, "Password is required")
+    .max(128, "Password cannot exceed 128 characters"),
+});
+
+export type RegisterInput = z.infer<typeof registerSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;

@@ -1,30 +1,66 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Lock, User, Key, ArrowRight, ShieldAlert } from "lucide-react";
+import { Lock, Mail, Key, ArrowRight, ShieldAlert, UserPlus, LogIn, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
 import { useTheme } from "@/hooks/useTheme";
+import { ApiError } from "@/lib/api-client";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
-  
-  const { login } = useAuth();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { login, register } = useAuth();
   const navigate = useNavigate();
   const { isDark, toggle } = useTheme();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === "mainAdmin" && password === "mainAdmin@123") {
-      setError(false);
-      login();
-      navigate("/admin");
-    } else {
-      setError(true);
-      // Small timeout to reset the shake animation trigger
-      setTimeout(() => setError(false), 500);
+    setErrorMessage(null);
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setErrorMessage("Email address is required.");
+      return;
+    }
+
+    if (!password) {
+      setErrorMessage("Password is required.");
+      return;
+    }
+
+    if (isRegisterMode && password.length < 8) {
+      setErrorMessage("Password must be at least 8 characters.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      if (isRegisterMode) {
+        const user = await register(trimmedEmail, password);
+        // Public registrations are MEMBER; redirect to workouts
+        navigate(user.role === "ADMIN" ? "/admin" : "/");
+      } else {
+        const user = await login(trimmedEmail, password);
+        if (user.role === "ADMIN") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+      }
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage("An unexpected authentication error occurred. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -37,46 +73,83 @@ export default function Login() {
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] mix-blend-screen pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-[120px] mix-blend-screen pointer-events-none" />
 
-        <motion.div 
+        <motion.div
           className="w-full max-w-md"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
           {/* Card */}
-          <motion.div 
+          <motion.div
             className="p-8 sm:p-10 rounded-3xl bg-card/80 backdrop-blur-xl border border-border/50 shadow-2xl relative overflow-hidden"
-            animate={error ? { x: [-10, 10, -10, 10, 0] } : {}}
+            animate={errorMessage ? { x: [-10, 10, -10, 10, 0] } : {}}
             transition={{ duration: 0.4 }}
           >
             {/* Inner glow effect on top border */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0 opacity-50" />
 
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-6">
               <div className="w-16 h-16 rounded-2xl bg-secondary border border-border shadow-inner flex items-center justify-center">
                 <Lock className="w-8 h-8 text-primary group-hover:scale-110 transition-transform" />
               </div>
             </div>
 
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <h1 className="font-display text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 mb-2">
-                Admin Portal
+                {isRegisterMode ? "Create Account" : "Access Portal"}
               </h1>
               <p className="text-muted-foreground text-sm">
-                Enter your secure credentials to manage the workspace.
+                {isRegisterMode
+                  ? "Register a new Member account to access the platform."
+                  : "Sign in with your verified email and password."}
               </p>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-5">
+            {/* Mode switch tabs */}
+            <div className="flex p-1 mb-6 rounded-xl bg-secondary/60 border border-border">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegisterMode(false);
+                  setErrorMessage(null);
+                }}
+                className={`flex-1 py-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+                  !isRegisterMode
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <LogIn className="w-3.5 h-3.5" /> Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegisterMode(true);
+                  setErrorMessage(null);
+                }}
+                className={`flex-1 py-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+                  isRegisterMode
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <UserPlus className="w-3.5 h-3.5" /> Register
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-4">
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 pointer-events-none" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 pointer-events-none" />
                   <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Username"
-                    className="w-full pl-12 pr-4 py-4 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 focus:bg-secondary transition-all"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email address"
+                    autoComplete="email"
+                    required
+                    disabled={isSubmitting}
+                    className="w-full pl-12 pr-4 py-4 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 focus:bg-secondary transition-all disabled:opacity-50"
                   />
                 </div>
 
@@ -86,31 +159,44 @@ export default function Login() {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
-                    className="w-full pl-12 pr-4 py-4 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 focus:bg-secondary transition-all"
+                    placeholder={isRegisterMode ? "Password (min. 8 characters)" : "Password"}
+                    autoComplete={isRegisterMode ? "new-password" : "current-password"}
+                    required
+                    disabled={isSubmitting}
+                    className="w-full pl-12 pr-4 py-4 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 focus:bg-secondary transition-all disabled:opacity-50"
                   />
                 </div>
               </div>
 
-              {error && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }} 
+              {errorMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm"
                 >
                   <ShieldAlert className="w-4 h-4 shrink-0" />
-                  <p>Invalid username or password. Access denied.</p>
+                  <p>{errorMessage}</p>
                 </motion.div>
               )}
 
               <motion.button
                 type="submit"
-                className="w-full py-4 mt-2 rounded-xl gradient-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 neon-glow hover:opacity-90 transition-all font-display tracking-wide group"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                disabled={isSubmitting}
+                className="w-full py-4 mt-2 rounded-xl gradient-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 neon-glow hover:opacity-90 transition-all font-display tracking-wide group disabled:opacity-50 disabled:pointer-events-none"
+                whileHover={!isSubmitting ? { scale: 1.02 } : {}}
+                whileTap={!isSubmitting ? { scale: 0.98 } : {}}
               >
-                Authenticate
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{isRegisterMode ? "Create Member Account" : "Authenticate"}</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
               </motion.button>
             </form>
           </motion.div>

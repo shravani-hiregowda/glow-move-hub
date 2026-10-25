@@ -84,3 +84,20 @@ export interface ApiResponse<T> {
     details?: unknown;
   };
 }
+
+export type Role = "MEMBER" | "ADMIN";
+
+export const ROLES: readonly Role[] = ["MEMBER", "ADMIN"] as const;
+
+export interface UserDto {
+  id: string;
+  email: string;
+  role: Role;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AuthResponse {
+  user: UserDto;
+  csrfToken?: string;
+}

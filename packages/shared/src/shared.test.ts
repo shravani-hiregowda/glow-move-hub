@@ -4,7 +4,10 @@ import {
   updateWorkoutSchema,
   workoutFilterQuerySchema,
   workoutIdParamSchema,
+  registerSchema,
+  loginSchema,
 } from "./workout.schemas";
+
 
 describe("Shared Workout Schemas", () => {
   const validWorkout = {
@@ -161,6 +164,68 @@ describe("Shared Workout Schemas", () => {
     it("rejects whitespace id", () => {
       const result = workoutIdParamSchema.safeParse({ id: "   " });
       expect(result.success).toBe(false);
+    });
+  });
+
+  describe("Auth Schemas", () => {
+    describe("registerSchema", () => {
+      it("accepts valid registration and normalizes email", () => {
+        const result = registerSchema.safeParse({
+          email: "  User.Name@Example.COM  ",
+          password: "SecurePassword123!",
+        });
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.email).toBe("user.name@example.com");
+          expect(result.data.password).toBe("SecurePassword123!");
+          expect((result.data as Record<string, unknown>).role).toBeUndefined();
+        }
+      });
+
+      it("rejects invalid email", () => {
+        const result = registerSchema.safeParse({
+          email: "not-an-email",
+          password: "SecurePassword123!",
+        });
+        expect(result.success).toBe(false);
+      });
+
+      it("rejects password shorter than 8 characters", () => {
+        const result = registerSchema.safeParse({
+          email: "valid@example.com",
+          password: "short",
+        });
+        expect(result.success).toBe(false);
+      });
+
+      it("rejects password longer than 128 characters", () => {
+        const result = registerSchema.safeParse({
+          email: "valid@example.com",
+          password: "a".repeat(129),
+        });
+        expect(result.success).toBe(false);
+      });
+    });
+
+    describe("loginSchema", () => {
+      it("accepts valid login and normalizes email", () => {
+        const result = loginSchema.safeParse({
+          email: " Admin@Example.com ",
+          password: "adminPassword",
+        });
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.email).toBe("admin@example.com");
+        }
+      });
+
+      it("rejects empty password on login", () => {
+        const result = loginSchema.safeParse({
+          email: "admin@example.com",
+          password: "",
+        });
+        expect(result.success).toBe(false);
+      });
     });
   });
 });

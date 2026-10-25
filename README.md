@@ -78,12 +78,11 @@ Never commit credentials, connection strings, or `.env` files. Both root and wor
 | `NODE_ENV` | Server | Runtime mode (`development`, `production`, `test`) | `development` |
 | `PORT` | Server | API HTTP server port | `3000` |
 | `DATABASE_URL` | Server | PostgreSQL connection string (**server-side only**) | `postgresql://postgres:postgres@localhost:5432/jerai_fit?schema=public` |
-| `ALLOW_LOCAL_DEV_WRITES` | Server | Fail-closed write guard opt-in (**development only**) | `false` |
 | `CORS_ORIGIN` | Server | Allowed CORS frontend origin | `http://localhost:8080` |
 | `VITE_API_URL` | Client | Base URL for the backend API | `http://localhost:3000/api/v1` |
+| `ADMIN_EMAIL` | Script | Initial admin email (**bootstrap only**) | `admin@example.com` |
+| `ADMIN_PASSWORD` | Script | Initial admin password (**bootstrap only**, min 8 chars) | `(secure passphrase)` |
 
-> [!WARNING]
-> The server refuses to start if `ALLOW_LOCAL_DEV_WRITES=true` is set when `NODE_ENV=production`. Production mutations are reserved for Phase 4 authentication.
 
 ---
 
@@ -218,21 +217,52 @@ List workouts with pagination, filtering, and full-text search.
 Fetch a single workout with its ordered steps. Returns `404` if not found.
 
 ### `POST /api/v1/workouts`
-Create a new workout. Requires `ALLOW_LOCAL_DEV_WRITES=true` in Phase 3.
+Create a new workout. Requires authenticated session with `ADMIN` role. Anonymous users receive `401 Unauthorized`; `MEMBER` users receive `403 Forbidden`.
 
 ### `PUT /api/v1/workouts/:id`
-Update an existing workout and synchronize steps. Requires `ALLOW_LOCAL_DEV_WRITES=true` in Phase 3.
+Update an existing workout and synchronize steps. Requires authenticated session with `ADMIN` role. Anonymous users receive `401 Unauthorized`; `MEMBER` users receive `403 Forbidden`.
 
 ### `DELETE /api/v1/workouts/:id`
-Delete a workout. Cascades to steps. Requires `ALLOW_LOCAL_DEV_WRITES=true` in Phase 3.
+Delete a workout. Cascades to steps. Requires authenticated session with `ADMIN` role. Anonymous users receive `401 Unauthorized`; `MEMBER` users receive `403 Forbidden`.
 
 ---
 
-## Security Boundary & Phase 4 Dependency
+## Authentication & Role-Based Access Control (Phase 4)
 
-- **Fail-Closed Writes**: `POST`, `PUT`, and `DELETE` requests are rejected by default with `403 Forbidden` (`WRITES_DISABLED`).
-- **Phase 4 Dependency**: True multi-user production authentication (admin vs member roles, secure JWT/session verification, hashed credentials) is slated for **Phase 4**.
-- **Temporary Local Dev Write Mode**: Can be enabled for local development only by setting `ALLOW_LOCAL_DEV_WRITES=true` in `.env`. This mode is strictly barred from starting in production.
+### Authentication Endpoints
+
+- `POST /api/v1/auth/register`: Public registration. Enforces Argon2id password hashing and always assigns `MEMBER` role. Returns generic duplicate errors on conflict.
+- `POST /api/v1/auth/login`: Validates credentials, rotates session identifier, sets `HttpOnly`, `SameSite=Lax`, bounded-lifetime session cookie, and issues anti-CSRF token. Rate limited.
+- `GET /api/v1/auth/me`: Restores current authenticated user profile and role. Returns `401` if unauthenticated or expired.
+- `POST /api/v1/auth/logout`: Revokes session record on the server and clears cookies.
+- `GET /api/v1/auth/csrf`: Generates or retrieves current anti-CSRF token.
+
+### Security Architecture
+
+- **Password Hashing**: Argon2id (`m=65536, t=3, p=1`) per OWASP recommendations. Never stores plaintext passwords.
+- **Session Model**: Unguessable cryptographically random session tokens (32 bytes hex). Only SHA-256 hash of token is persisted in PostgreSQL.
+- **Cookie Flags**: `HttpOnly`, `SameSite=Lax`, `Secure` in production, bounded 7-day lifetime.
+- **Anti-CSRF Protection**:
+  1. Strict `Origin` and `Referer` validation against whitelist on all state-changing requests (`POST`, `PUT`, `DELETE`).
+  2. Double-Submit Cookie verification with `X-CSRF-Token` header for cookie-authenticated mutations.
+- **Role Hierarchy**:
+  - `Public / Anonymous`: Read-only access to workouts.
+  - `MEMBER`: Authenticated member profile; rejected (`403 Forbidden`) on workout modifications.
+  - `ADMIN`: Full workout management and library CRUD permissions.
+
+### Administrator Bootstrap
+
+The application does not ship default administrator credentials or a public promotion endpoint. To create the initial administrator securely:
+
+```bash
+ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=YourStrongSecret123! npm run admin:bootstrap
+```
+
+The bootstrap script:
+- Validates the email and password format.
+- Checks if an administrator already exists; if so, safely aborts without overwriting.
+- Hashes credentials with Argon2id and inserts an `ADMIN` user.
+- Never prints the password or session tokens to logs or stdout.
 
 ---
 
@@ -241,7 +271,7 @@ Delete a workout. Cascades to steps. Requires `ALLOW_LOCAL_DEV_WRITES=true` in P
 Run automated checks across all workspaces from the monorepo root:
 
 ```bash
-# Run all automated tests (74 tests across shared, web, and api)
+# Run all automated tests (106 tests across shared, web, and api)
 npm test
 
 # Run ESLint across all packages
@@ -255,6 +285,6 @@ npm run build
 ```
 
 ### Test Coverage Summary:
-- **`packages/shared`** (20 tests): Workout validation schemas, boundaries, constraints, defaults.
-- **`apps/web`** (40 tests): Unit and integration tests for filtering, modals, timers, theme, TanStack Query states, and storage error resilience.
-- **`apps/api`** (14 tests): Supertest endpoint verification for health, listings, filters, 404/400 handling, write-guard protection, and safe error handling.
+- **`packages/shared`** (26 tests): Workout validation schemas, auth schemas (register, login, email normalization, password constraints).
+- **`apps/web`** (49 tests): Unit and integration tests for filtering, modals, timers, theme, TanStack Query states, storage error resilience, `AuthContext` state restore, `ProtectedRoute` RBAC guards, and Login/Register UI flows.
+- **`apps/api`** (31 tests): Supertest endpoint verification for health, listings, filters, safe error handling, Argon2id registration, login rate limiting, session rotation, HttpOnly cookies, CSRF protection, admin bootstrap, and server-enforced RBAC (401 anonymous, 403 member, 201/200 admin).

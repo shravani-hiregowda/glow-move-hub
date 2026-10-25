@@ -1,52 +1,74 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import type { UserDto } from "@jerai/shared";
+import { api } from "@/lib/api-client";
 
-interface AuthContextType {
+export interface AuthContextType {
   isAuthenticated: boolean;
-  login: () => void;
-  logout: () => void;
+  user: UserDto | null;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<UserDto>;
+  register: (email: string, password: string) => Promise<UserDto>;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<UserDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Check local storage on initial chunk load
+  const refreshUser = useCallback(async () => {
     try {
-      const savedState = localStorage.getItem("glow_move_auth_token");
-      if (savedState === "authenticated") {
-        setIsAuthenticated(true);
+      const data = await api.getMe();
+      if (data?.user) {
+        setUser(data.user);
+      } else {
+        setUser(null);
       }
     } catch {
-      // ignore storage access errors
+      setUser(null);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
-  const login = () => {
-    setIsAuthenticated(true);
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
+
+  const login = async (email: string, password: string): Promise<UserDto> => {
+    const res = await api.login({ email, password });
+    setUser(res.user);
+    return res.user;
+  };
+
+  const register = async (email: string, password: string): Promise<UserDto> => {
+    const res = await api.register({ email, password });
+    setUser(res.user);
+    return res.user;
+  };
+
+  const logout = async (): Promise<void> => {
     try {
-      localStorage.setItem("glow_move_auth_token", "authenticated");
-    } catch {
-      // ignore storage access errors
+      await api.logout();
+    } finally {
+      setUser(null);
     }
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    try {
-      localStorage.removeItem("glow_move_auth_token");
-    } catch {
-      // ignore storage access errors
-    }
+  const value: AuthContextType = {
+    isAuthenticated: Boolean(user),
+    user,
+    isLoading,
+    login,
+    register,
+    logout,
+    refreshUser,
   };
-
-  if (isLoading) return null; // Avoid flicker during boot check
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

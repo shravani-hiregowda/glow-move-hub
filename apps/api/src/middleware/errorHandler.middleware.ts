@@ -19,6 +19,19 @@ export function errorHandler(
     return;
   }
 
+  // Handle CORS policy rejection
+  if (err instanceof Error && err.message === "Not allowed by CORS") {
+    res.status(403).json({
+      success: false,
+      error: {
+        code: "CORS_FORBIDDEN",
+        message: "Origin not allowed by CORS policy.",
+      },
+    });
+    return;
+  }
+
+
   // Handle Prisma Known Request Errors
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === "P2025") {
