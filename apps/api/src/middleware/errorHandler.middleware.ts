@@ -7,6 +7,18 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
+  // Handle JSON parse errors from body-parser
+  if (err instanceof SyntaxError && "status" in err && (err as { status?: number }).status === 400) {
+    res.status(400).json({
+      success: false,
+      error: {
+        code: "INVALID_JSON",
+        message: "Malformed JSON payload provided.",
+      },
+    });
+    return;
+  }
+
   // Handle Prisma Known Request Errors
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === "P2025") {

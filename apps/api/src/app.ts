@@ -26,10 +26,10 @@ export function createApp() {
     })
   );
 
-  app.use(express.json({ limit: "1mb" }));
-
-  // Global write-access security guard
+  // Global write-access security guard (reject unauthenticated writes before parsing body)
   app.use(writeGuard);
+
+  app.use(express.json({ limit: "1mb" }));
 
   // API v1 routes
   app.use("/api/v1", healthRoutes);
