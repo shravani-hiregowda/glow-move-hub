@@ -1,7 +1,20 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import WorkoutModal from "@/components/WorkoutModal";
 import { Workout } from "@/data/workouts";
+import { api } from "@/lib/api-client";
+
+vi.mock("@/lib/api-client", () => ({
+  api: {
+    getActiveSession: vi.fn().mockResolvedValue(null),
+    startSession: vi.fn(),
+    updateSessionProgress: vi.fn(),
+    completeSession: vi.fn(),
+    abandonSession: vi.fn(),
+  },
+  ApiError: class ApiError extends Error {},
+}));
 
 const sampleModalWorkout: Workout = {
   id: "modal-test-1",
@@ -135,5 +148,139 @@ describe("WorkoutModal & Focus Mode Timer", () => {
     fireEvent.click(closeBtn);
 
     expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+
+  describe("Active Workout Protection & Warning", () => {
+    let testQueryClient: QueryClient;
+
+    beforeEach(() => {
+      vi.useRealTimers();
+      testQueryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false, gcTime: 0 },
+        },
+      });
+      vi.mocked(api.getActiveSession).mockReset().mockResolvedValue(null);
+      vi.mocked(api.startSession).mockReset();
+      vi.mocked(api.abandonSession).mockReset();
+    });
+
+    it("warns user before starting if another workout session is already in progress, and preserves session on cancel", async () => {
+      // Prior session for a different workout ("w-prior-99")
+      vi.mocked(api.getActiveSession).mockResolvedValue({
+        id: "sess-prior-1",
+        userId: "u-1",
+        workoutId: "w-prior-99",
+        status: "IN_PROGRESS",
+        startedAt: "2026-10-26T10:00:00.000Z",
+        endedAt: null,
+        durationSeconds: 120,
+        currentStepIndex: 1,
+        workoutTitle: "Push-Up Blast",
+        workoutCalories: 150,
+        totalSteps: 4,
+        completedStepIndices: [],
+        createdAt: "2026-10-26T10:00:00.000Z",
+        updatedAt: "2026-10-26T10:02:00.000Z",
+      });
+
+      render(
+        <QueryClientProvider client={testQueryClient}>
+          <WorkoutModal workout={sampleModalWorkout} onClose={() => {}} />
+        </QueryClientProvider>
+      );
+
+      // Wait for active-session query to settle
+      await waitFor(() => {
+        expect(testQueryClient.getQueryData(["active-session"])).toBeTruthy();
+      });
+
+      // Click Start button on the new workout ("Core Crusher Planks")
+      const startBtn = screen.getByRole("button", { name: /start/i });
+      fireEvent.click(startBtn);
+
+      // Warning dialog should appear
+      const dialog = await screen.findByRole("alertdialog");
+      expect(dialog).toBeInTheDocument();
+      expect(screen.getByText("Active Workout In Progress")).toBeInTheDocument();
+      expect(screen.getByText(/Push-Up Blast/i)).toBeInTheDocument();
+
+      // Verify startSession was NOT called yet
+      expect(api.startSession).not.toHaveBeenCalled();
+
+      // Click "Keep Current Workout" (cancel button)
+      const cancelBtn = screen.getByTestId("cancel-abandon-btn");
+      fireEvent.click(cancelBtn);
+
+      // Dialog should close
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+
+      // Neither startSession nor abandonSession was ever dispatched
+      expect(api.startSession).not.toHaveBeenCalled();
+      expect(api.abandonSession).not.toHaveBeenCalled();
+    });
+
+    it("confirms and starts new session when user accepts the abandonment warning", async () => {
+      vi.mocked(api.getActiveSession).mockResolvedValue({
+        id: "sess-prior-1",
+        userId: "u-1",
+        workoutId: "w-prior-99",
+        status: "IN_PROGRESS",
+        startedAt: "2026-10-26T10:00:00.000Z",
+        endedAt: null,
+        durationSeconds: 120,
+        currentStepIndex: 1,
+        workoutTitle: "Push-Up Blast",
+        workoutCalories: 150,
+        totalSteps: 4,
+        completedStepIndices: [],
+        createdAt: "2026-10-26T10:00:00.000Z",
+        updatedAt: "2026-10-26T10:02:00.000Z",
+      });
+
+      vi.mocked(api.startSession).mockResolvedValue({
+        id: "sess-new-2",
+        userId: "u-1",
+        workoutId: sampleModalWorkout.id,
+        status: "IN_PROGRESS",
+        startedAt: new Date().toISOString(),
+        endedAt: null,
+        durationSeconds: 0,
+        currentStepIndex: 0,
+        workoutTitle: sampleModalWorkout.title,
+        workoutCalories: sampleModalWorkout.calories,
+        totalSteps: sampleModalWorkout.steps?.length || 0,
+        completedStepIndices: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      render(
+        <QueryClientProvider client={testQueryClient}>
+          <WorkoutModal workout={sampleModalWorkout} onClose={() => {}} />
+        </QueryClientProvider>
+      );
+
+      await waitFor(() => {
+        expect(testQueryClient.getQueryData(["active-session"])).toBeTruthy();
+      });
+
+      // Click Start
+      const startBtn = screen.getByRole("button", { name: /start/i });
+      fireEvent.click(startBtn);
+
+      // Dialog should appear
+      await screen.findByRole("alertdialog");
+
+      // Click "Start New Workout" (confirm button)
+      const confirmBtn = screen.getByTestId("confirm-abandon-btn");
+      fireEvent.click(confirmBtn);
+
+      // Dialog closes and startSession is triggered with new workout ID
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(api.startSession).toHaveBeenCalledWith({ workoutId: sampleModalWorkout.id });
+      });
+    });
   });
 });

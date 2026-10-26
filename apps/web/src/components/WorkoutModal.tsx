@@ -55,6 +55,7 @@ function InnerWorkoutModal({ workout, onClose }: WorkoutModalProps) {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isCompletedState, setIsCompletedState] = useState(false);
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
+  const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
 
   // Sync state when a new workout is opened
   useEffect(() => {
@@ -67,6 +68,7 @@ function InnerWorkoutModal({ workout, onClose }: WorkoutModalProps) {
       setActiveSessionId(null);
       setIsCompletedState(false);
       setSessionStartTime(null);
+      setShowAbandonConfirm(false);
     }
   }, [workout]);
 
@@ -75,7 +77,8 @@ function InnerWorkoutModal({ workout, onClose }: WorkoutModalProps) {
     queryKey: ["active-session"],
     queryFn: async () => {
       try {
-        return await api.getActiveSession();
+        const sess = await api.getActiveSession();
+        return sess ?? null;
       } catch {
         return null;
       }
@@ -231,13 +234,38 @@ function InnerWorkoutModal({ workout, onClose }: WorkoutModalProps) {
       setTimerLeft(maxTime);
     }
     const nextState = !timerActive;
-    setTimerActive(nextState);
 
-    // If starting and not yet tracking a session on the server, attempt to start session
+    // Check if starting a new workout session when a DIFFERENT session is already active
     if (nextState && !activeSessionId && workout) {
+      if (
+        serverActiveSession &&
+        serverActiveSession.workoutId !== workout.id &&
+        serverActiveSession.status === "IN_PROGRESS"
+      ) {
+        setShowAbandonConfirm(true);
+        return;
+      }
+
+      setTimerActive(true);
+      setSessionStartTime(Date.now());
+      startSessionMutation.mutate(workout.id);
+      return;
+    }
+
+    setTimerActive(nextState);
+  };
+
+  const handleConfirmStartNewWorkout = () => {
+    setShowAbandonConfirm(false);
+    if (workout) {
+      setTimerActive(true);
       setSessionStartTime(Date.now());
       startSessionMutation.mutate(workout.id);
     }
+  };
+
+  const handleCancelStartNewWorkout = () => {
+    setShowAbandonConfirm(false);
   };
 
   const handleCompleteWorkout = () => {
@@ -530,6 +558,49 @@ function InnerWorkoutModal({ workout, onClose }: WorkoutModalProps) {
               </div>
             </div>
           </motion.div>
+
+          {showAbandonConfirm && (
+            <div
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="abandon-dialog-title"
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in-0 duration-200"
+            >
+              <div className="bg-card text-card-foreground border border-border rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+                <div className="flex items-center gap-3 text-amber-500">
+                  <AlertCircle className="w-6 h-6 shrink-0" />
+                  <h3 id="abandon-dialog-title" className="text-lg font-bold text-foreground">
+                    Active Workout In Progress
+                  </h3>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  You already have an active workout in progress for{" "}
+                  <strong className="text-foreground">
+                    {serverActiveSession?.workoutTitle || "another workout"}
+                  </strong>
+                  . Starting this workout will cancel your previous session. Do you want to continue?
+                </p>
+                <div className="flex justify-end gap-3 pt-3">
+                  <button
+                    type="button"
+                    onClick={handleCancelStartNewWorkout}
+                    data-testid="cancel-abandon-btn"
+                    className="px-4 py-2.5 rounded-xl border border-border text-sm font-semibold hover:bg-muted text-foreground transition-colors"
+                  >
+                    Keep Current Workout
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmStartNewWorkout}
+                    data-testid="confirm-abandon-btn"
+                    className="px-4 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:bg-destructive/90 transition-colors shadow-sm"
+                  >
+                    Start New Workout
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

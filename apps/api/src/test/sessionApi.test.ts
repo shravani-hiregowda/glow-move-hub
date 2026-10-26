@@ -356,6 +356,156 @@ describe("Workout Session & Progress API", () => {
       expect(res.body.success).toBe(false);
       expect(res.body.error.code).toBe("INVALID_SESSION_STATUS");
     });
+
+    it("rejects negative currentStepIndex and prevents database mutations", async () => {
+      vi.mocked(prisma.workoutSession.findUnique).mockResolvedValue(mockSessionUserA as never);
+      const txSpy = vi.mocked(prisma.$transaction);
+      txSpy.mockClear();
+
+      const res = await request(app)
+        .patch("/api/v1/sessions/sess-rec-1/progress")
+        .set(authHeaders)
+        .send({ currentStepIndex: -1 });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(txSpy).not.toHaveBeenCalled();
+    });
+
+    it("rejects currentStepIndex equal to totalSteps and prevents database mutations", async () => {
+      // mockSessionUserA has totalSteps: 3 (valid indices: 0, 1, 2)
+      vi.mocked(prisma.workoutSession.findUnique).mockResolvedValue(mockSessionUserA as never);
+      const txSpy = vi.mocked(prisma.$transaction);
+      txSpy.mockClear();
+
+      const res = await request(app)
+        .patch("/api/v1/sessions/sess-rec-1/progress")
+        .set(authHeaders)
+        .send({ currentStepIndex: 3 });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe("INVALID_STEP_INDEX");
+      expect(res.body.error.message).toMatch(/out of bounds/i);
+      expect(txSpy).not.toHaveBeenCalled();
+    });
+
+    it("rejects currentStepIndex greater than totalSteps and prevents database mutations", async () => {
+      vi.mocked(prisma.workoutSession.findUnique).mockResolvedValue(mockSessionUserA as never);
+      const txSpy = vi.mocked(prisma.$transaction);
+      txSpy.mockClear();
+
+      const res = await request(app)
+        .patch("/api/v1/sessions/sess-rec-1/progress")
+        .set(authHeaders)
+        .send({ currentStepIndex: 10 });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe("INVALID_STEP_INDEX");
+      expect(txSpy).not.toHaveBeenCalled();
+    });
+
+    it("accepts valid boundary step indices (0 and totalSteps - 1)", async () => {
+      vi.mocked(prisma.workoutSession.findUnique).mockResolvedValue(mockSessionUserA as never);
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+        return callback({
+          workoutSessionStep: { create: vi.fn() },
+          workoutSession: {
+            update: vi.fn().mockResolvedValue({
+              ...mockSessionUserA,
+              currentStepIndex: 0,
+            }),
+          },
+        } as never);
+      });
+
+      // Lower boundary: index 0
+      const res0 = await request(app)
+        .patch("/api/v1/sessions/sess-rec-1/progress")
+        .set(authHeaders)
+        .send({ currentStepIndex: 0 });
+
+      expect(res0.status).toBe(200);
+      expect(res0.body.success).toBe(true);
+
+      // Upper boundary: index totalSteps - 1 (2 for totalSteps 3)
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+        return callback({
+          workoutSessionStep: { create: vi.fn() },
+          workoutSession: {
+            update: vi.fn().mockResolvedValue({
+              ...mockSessionUserA,
+              currentStepIndex: 2,
+            }),
+          },
+        } as never);
+      });
+
+      const resUpper = await request(app)
+        .patch("/api/v1/sessions/sess-rec-1/progress")
+        .set(authHeaders)
+        .send({ currentStepIndex: 2 });
+
+      expect(resUpper.status).toBe(200);
+      expect(resUpper.body.success).toBe(true);
+    });
+
+    it("rejects completedStepIndices with index equal to or exceeding totalSteps", async () => {
+      vi.mocked(prisma.workoutSession.findUnique).mockResolvedValue(mockSessionUserA as never);
+      const txSpy = vi.mocked(prisma.$transaction);
+      txSpy.mockClear();
+
+      // Equal to totalSteps (3)
+      const resEqual = await request(app)
+        .patch("/api/v1/sessions/sess-rec-1/progress")
+        .set(authHeaders)
+        .send({ completedStepIndices: [0, 3] });
+
+      expect(resEqual.status).toBe(400);
+      expect(resEqual.body.success).toBe(false);
+      expect(resEqual.body.error.code).toBe("INVALID_STEP_INDEX");
+      expect(txSpy).not.toHaveBeenCalled();
+
+      // Greater than totalSteps (5)
+      const resGreater = await request(app)
+        .patch("/api/v1/sessions/sess-rec-1/progress")
+        .set(authHeaders)
+        .send({ completedStepIndices: [5] });
+
+      expect(resGreater.status).toBe(400);
+      expect(resGreater.body.success).toBe(false);
+      expect(resGreater.body.error.code).toBe("INVALID_STEP_INDEX");
+      expect(txSpy).not.toHaveBeenCalled();
+    });
+
+    it("rejects malformed completedStepIndices (duplicates or negative)", async () => {
+      vi.mocked(prisma.workoutSession.findUnique).mockResolvedValue(mockSessionUserA as never);
+      const txSpy = vi.mocked(prisma.$transaction);
+      txSpy.mockClear();
+
+      // Duplicate step indices
+      const resDup = await request(app)
+        .patch("/api/v1/sessions/sess-rec-1/progress")
+        .set(authHeaders)
+        .send({ completedStepIndices: [1, 1] });
+
+      expect(resDup.status).toBe(400);
+      expect(resDup.body.success).toBe(false);
+      expect(resDup.body.error.code).toBe("INVALID_STEP_INDEX");
+      expect(resDup.body.error.message).toMatch(/duplicate/i);
+      expect(txSpy).not.toHaveBeenCalled();
+
+      // Negative step index
+      const resNeg = await request(app)
+        .patch("/api/v1/sessions/sess-rec-1/progress")
+        .set(authHeaders)
+        .send({ completedStepIndices: [-1] });
+
+      expect(resNeg.status).toBe(400);
+      expect(resNeg.body.success).toBe(false);
+      expect(txSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe("POST /api/v1/sessions/:id/complete — Complete Session", () => {
@@ -405,6 +555,38 @@ describe("Workout Session & Progress API", () => {
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
       expect(res.body.error.code).toBe("INVALID_SESSION_STATUS");
+    });
+
+    it("rejects completing session with completedStepIndices exceeding totalSteps without DB mutations", async () => {
+      vi.mocked(prisma.workoutSession.findUnique).mockResolvedValue(mockSessionUserA as never);
+      const txSpy = vi.mocked(prisma.$transaction);
+      txSpy.mockClear();
+
+      const res = await request(app)
+        .post("/api/v1/sessions/sess-rec-1/complete")
+        .set(authHeaders)
+        .send({ completedStepIndices: [3] }); // totalSteps is 3, valid indices are 0..2
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe("INVALID_STEP_INDEX");
+      expect(txSpy).not.toHaveBeenCalled();
+    });
+
+    it("rejects completing session with duplicate completedStepIndices without DB mutations", async () => {
+      vi.mocked(prisma.workoutSession.findUnique).mockResolvedValue(mockSessionUserA as never);
+      const txSpy = vi.mocked(prisma.$transaction);
+      txSpy.mockClear();
+
+      const res = await request(app)
+        .post("/api/v1/sessions/sess-rec-1/complete")
+        .set(authHeaders)
+        .send({ completedStepIndices: [0, 0] });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe("INVALID_STEP_INDEX");
+      expect(txSpy).not.toHaveBeenCalled();
     });
   });
 

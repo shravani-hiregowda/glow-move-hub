@@ -14,6 +14,12 @@ import sessionRoutes from "./routes/session.routes";
 export function createApp() {
   const app = express();
 
+  // Configure reverse proxy trust based on explicit operator topology (never blindly trust arbitrary headers)
+  if (env.TRUST_PROXY) {
+    const numeric = Number(env.TRUST_PROXY);
+    app.set("trust proxy", !isNaN(numeric) ? numeric : env.TRUST_PROXY);
+  }
+
   // Narrow, credentialed CORS configuration
   const allowedOrigins = [
     env.CORS_ORIGIN,

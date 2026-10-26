@@ -203,6 +203,79 @@ export async function getSessionById(userId: string, sessionId: string): Promise
   return formatSessionDto(session as unknown as PrismaSessionWithRelations);
 }
 
+export function validateStepIndices(
+  totalSteps: number,
+  currentStepIndex?: number,
+  completedStepIndices?: number[]
+): void {
+  if (currentStepIndex !== undefined) {
+    if (typeof currentStepIndex !== "number" || !Number.isInteger(currentStepIndex)) {
+      throw new SessionServiceError(
+        400,
+        "INVALID_STEP_INDEX",
+        "currentStepIndex must be an integer."
+      );
+    }
+    if (currentStepIndex < 0) {
+      throw new SessionServiceError(
+        400,
+        "INVALID_STEP_INDEX",
+        `currentStepIndex cannot be negative (received ${currentStepIndex}).`
+      );
+    }
+    if (totalSteps <= 0 || currentStepIndex >= totalSteps) {
+      throw new SessionServiceError(
+        400,
+        "INVALID_STEP_INDEX",
+        `currentStepIndex ${currentStepIndex} is out of bounds for workout session with ${totalSteps} total step(s). Step index must be between 0 and ${Math.max(0, totalSteps - 1)}.`
+      );
+    }
+  }
+
+  if (completedStepIndices !== undefined) {
+    if (!Array.isArray(completedStepIndices)) {
+      throw new SessionServiceError(
+        400,
+        "INVALID_STEP_INDEX",
+        "completedStepIndices must be an array of integers."
+      );
+    }
+
+    const seen = new Set<number>();
+    for (const idx of completedStepIndices) {
+      if (typeof idx !== "number" || !Number.isInteger(idx)) {
+        throw new SessionServiceError(
+          400,
+          "INVALID_STEP_INDEX",
+          "completedStepIndices must contain only valid integers."
+        );
+      }
+      if (idx < 0) {
+        throw new SessionServiceError(
+          400,
+          "INVALID_STEP_INDEX",
+          `completedStepIndex cannot be negative (received ${idx}).`
+        );
+      }
+      if (totalSteps <= 0 || idx >= totalSteps) {
+        throw new SessionServiceError(
+          400,
+          "INVALID_STEP_INDEX",
+          `completedStepIndex ${idx} is out of bounds for workout session with ${totalSteps} total step(s). Step index must be between 0 and ${Math.max(0, totalSteps - 1)}.`
+        );
+      }
+      if (seen.has(idx)) {
+        throw new SessionServiceError(
+          400,
+          "INVALID_STEP_INDEX",
+          `Duplicate step index ${idx} in completedStepIndices.`
+        );
+      }
+      seen.add(idx);
+    }
+  }
+}
+
 export async function updateSessionProgress(
   userId: string,
   sessionId: string,
@@ -226,6 +299,12 @@ export async function updateSessionProgress(
       `Cannot update progress on a session that is already ${existing.status.toLowerCase()}.`
     );
   }
+
+  validateStepIndices(
+    existing.totalSteps,
+    input.currentStepIndex,
+    input.completedStepIndices
+  );
 
   return await prisma.$transaction(async (tx) => {
     // If completedStepIndices provided, insert missing steps
@@ -290,6 +369,12 @@ export async function completeSession(
       `Cannot complete a session that is already ${existing.status.toLowerCase()}.`
     );
   }
+
+  validateStepIndices(
+    existing.totalSteps,
+    undefined,
+    input?.completedStepIndices
+  );
 
   return await prisma.$transaction(async (tx) => {
     if (input?.completedStepIndices && input.completedStepIndices.length > 0) {
