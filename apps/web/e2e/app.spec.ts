@@ -325,7 +325,7 @@ test.describe.serial("Phase 4 Authentication & Server-Enforced RBAC", () => {
     ]);
 
     await expect(page).toHaveURL(/.*\/admin/);
-    await page.getByRole("button", { name: /add workout/i }).click();
+    await page.getByRole("button", { name: /add.*workout/i }).click();
 
     // Verify image upload label is visible
     await expect(page.locator("text=Workout Image")).toBeVisible();
