@@ -37,7 +37,12 @@ export async function main() {
       });
       createdCount++;
     } else {
-      // Idempotently update metadata and sync steps
+      // Idempotently update metadata and sync steps, preserving migrated media references
+      const resolvedImage =
+        existing.image && existing.image.startsWith("/api/v1/media/")
+          ? existing.image
+          : item.image;
+
       await prisma.workout.update({
         where: { id: item.id },
         data: {
@@ -48,7 +53,7 @@ export async function main() {
           duration: item.duration,
           calories: item.calories,
           videoUrl: item.videoUrl,
-          image: item.image,
+          image: resolvedImage,
         },
       });
 

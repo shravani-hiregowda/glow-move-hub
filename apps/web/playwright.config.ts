@@ -1,4 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load root monorepo .env for test fixtures using PrismaClient
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config();
 
 /**
  * @see https://playwright.dev/docs/test-configuration

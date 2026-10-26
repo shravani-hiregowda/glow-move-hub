@@ -16,6 +16,10 @@ jobs:
   quality-gate:
     name: Lint, Typecheck, Unit Tests & Build
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/jerai_test?schema=public
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/jerai_test?schema=public
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -81,6 +85,7 @@ jobs:
       NODE_ENV: test
       PORT: 3001
       DATABASE_URL: postgresql://ci_user:ci_password@localhost:5432/jerai_ci_test?schema=public
+      DIRECT_URL: postgresql://ci_user:ci_password@localhost:5432/jerai_ci_test?schema=public
       CORS_ORIGIN: http://localhost:5173
       STORAGE_DRIVER: local
       STORAGE_LOCAL_DIR: uploads
