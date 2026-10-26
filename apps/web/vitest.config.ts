@@ -15,6 +15,12 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@jerai/shared": path.resolve(__dirname, "../../packages/shared/src"),
+      "@functions": path.resolve(__dirname, "../../functions"),
+    },
+  },
+  server: {
+    fs: {
+      allow: ["..", "../../functions"],
     },
   },
 });

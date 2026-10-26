@@ -7,7 +7,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "@jerai/shared": ["../../packages/shared/src/index.ts"],
-      "@jerai/shared/*": ["../../packages/shared/src/*"]
+      "@jerai/shared/*": ["../../packages/shared/src/*"],
+      "@functions/*": ["../../functions/*"]
     },
     "skipLibCheck": true,
     "strictNullChecks": false

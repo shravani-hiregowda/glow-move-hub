@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { env } from "./config/env";
+import { proxyAuthGuard } from "./middleware/proxyAuth.middleware";
 import { authenticateSession } from "./middleware/auth.middleware";
 import { csrfProtection } from "./middleware/csrf.middleware";
 import { errorHandler } from "./middleware/errorHandler.middleware";
@@ -19,6 +20,9 @@ export function createApp() {
     const numeric = Number(env.TRUST_PROXY);
     app.set("trust proxy", !isNaN(numeric) ? numeric : env.TRUST_PROXY);
   }
+
+  // Fail-closed proxy authentication guard: runs before CORS, rate limiters, or application routes
+  app.use(proxyAuthGuard);
 
   // Narrow, credentialed CORS configuration
   const allowedOrigins = [

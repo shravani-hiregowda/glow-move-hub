@@ -20,13 +20,32 @@ const envSchema = z.object({
   STORAGE_LOCAL_DIR: z.string().default("uploads"),
   STORAGE_MAX_FILE_SIZE_BYTES: z.coerce.number().int().positive().default(5 * 1024 * 1024),
   TRUST_PROXY: z.string().optional(),
+  PROXY_SECRET: z.string().optional(),
+  REQUIRE_PROXY_AUTH: z.string().optional(),
+  DIRECT_URL: z.string().optional(),
   S3_ENDPOINT: z.string().optional(),
   S3_REGION: z.string().default("auto"),
   S3_BUCKET: z.string().optional(),
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   S3_PUBLIC_URL_PREFIX: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.NODE_ENV === "production") {
+    if (!data.PROXY_SECRET || data.PROXY_SECRET.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["PROXY_SECRET"],
+        message: "PROXY_SECRET must be configured and non-empty in production.",
+      });
+    }
+  }
 });
+
+export { envSchema };
+
+export function parseAndValidateEnv(rawEnv: Record<string, unknown>) {
+  return envSchema.safeParse(rawEnv);
+}
 
 const parsed = envSchema.safeParse(process.env);
 
@@ -49,6 +68,9 @@ export const env = parsed.success
       STORAGE_LOCAL_DIR: "uploads",
       STORAGE_MAX_FILE_SIZE_BYTES: 5 * 1024 * 1024,
       TRUST_PROXY: undefined,
+      PROXY_SECRET: undefined,
+      REQUIRE_PROXY_AUTH: undefined,
+      DIRECT_URL: undefined,
       S3_ENDPOINT: undefined,
       S3_REGION: "auto",
       S3_BUCKET: undefined,

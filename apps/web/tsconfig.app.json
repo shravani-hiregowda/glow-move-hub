@@ -25,6 +25,9 @@
       ],
       "@jerai/shared/*": [
         "../../packages/shared/src/*"
+      ],
+      "@functions/*": [
+        "../../functions/*"
       ]
     },
     "skipLibCheck": true,
