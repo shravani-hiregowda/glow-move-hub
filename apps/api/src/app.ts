@@ -8,6 +8,7 @@ import { errorHandler } from "./middleware/errorHandler.middleware";
 import healthRoutes from "./routes/health.routes";
 import authRoutes from "./routes/auth.routes";
 import workoutRoutes from "./routes/workout.routes";
+import mediaRoutes from "./routes/media.routes";
 
 export function createApp() {
   const app = express();
@@ -50,6 +51,7 @@ export function createApp() {
   app.use("/api/v1", healthRoutes);
   app.use("/api/v1", authRoutes);
   app.use("/api/v1", workoutRoutes);
+  app.use("/api/v1", mediaRoutes);
 
   // 404 handler for unmatched routes
   app.use((req: Request, res: Response) => {

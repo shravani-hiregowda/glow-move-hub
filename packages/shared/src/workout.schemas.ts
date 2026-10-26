@@ -112,3 +112,21 @@ export const loginSchema = z.object({
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+
+export const mediaUploadQuerySchema = z.object({
+  workoutId: z.string().trim().optional(),
+});
+
+export const mediaMigrationQuerySchema = z.object({
+  dryRun: z
+    .union([z.boolean(), z.string()])
+    .optional()
+    .transform((val) => {
+      if (typeof val === "boolean") return val;
+      if (typeof val === "string") return val.toLowerCase() === "true" || val === "1";
+      return false;
+    }),
+});
+
+export type MediaUploadQueryInput = z.infer<typeof mediaUploadQuerySchema>;
+export type MediaMigrationQueryInput = z.infer<typeof mediaMigrationQuerySchema>;

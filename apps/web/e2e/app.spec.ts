@@ -36,6 +36,20 @@ test.describe("Public Application Experience", () => {
     await expect(pushupCard).toBeVisible();
   });
 
+  test("displays workout catalog exercise cards with valid image references", async ({ page }) => {
+    const workoutsSection = page.locator("text=Explore Workouts");
+    await expect(workoutsSection).toBeVisible();
+
+    const pushupCard = page.getByRole("heading", { name: "Push-Up Power" }).first();
+    await expect(pushupCard).toBeVisible();
+
+    const cardImage = page.locator("img").first();
+    await expect(cardImage).toBeVisible();
+    const src = await cardImage.getAttribute("src");
+    expect(src).toBeTruthy();
+    expect(src).toMatch(/(\/api\/v1\/media\/file\/|\/assets\/|data:image\/|https?:\/\/)/);
+  });
+
   test("filters workouts dynamically via search input", async ({ page }) => {
     const searchInput = page.getByPlaceholder("Search workouts...");
     await expect(searchInput).toBeVisible();
@@ -299,5 +313,22 @@ test.describe.serial("Phase 4 Authentication & Server-Enforced RBAC", () => {
     await page.goto("/admin");
     await expect(page).toHaveURL(/.*\/login/);
     await expect(page.locator("text=Manage your workout library")).not.toBeVisible();
+  });
+
+  test("9. Administrator workout editor renders workout image upload area", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByPlaceholder("Email address").fill(TEST_ADMIN_EMAIL);
+    await page.getByPlaceholder(/Password/i).fill(TEST_ADMIN_PASSWORD);
+    await Promise.all([
+      page.waitForResponse((resp) => resp.url().includes("/api/v1/auth/login")),
+      page.getByRole("button", { name: /authenticate/i }).click(),
+    ]);
+
+    await expect(page).toHaveURL(/.*\/admin/);
+    await page.getByRole("button", { name: /add workout/i }).click();
+
+    // Verify image upload label is visible
+    await expect(page.locator("text=Workout Image")).toBeVisible();
+    await expect(page.locator("text=PNG, JPG or WEBP (Max 5MB)")).toBeVisible();
   });
 });

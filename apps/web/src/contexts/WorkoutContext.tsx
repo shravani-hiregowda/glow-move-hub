@@ -105,7 +105,14 @@ function InnerWorkoutProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof window === "undefined" || !window.localStorage) return;
     try {
-      localStorage.setItem("workouts", JSON.stringify(localWorkouts));
+      // Guard against quota overflow: do not serialize massive Base64 strings to localStorage
+      const safeWorkouts = localWorkouts.map((w) => {
+        if (w.image && w.image.startsWith("data:image/") && w.image.length > 500) {
+          return { ...w, image: "/placeholder.svg" };
+        }
+        return w;
+      });
+      localStorage.setItem("workouts", JSON.stringify(safeWorkouts));
       setStorageError(null);
     } catch (err: unknown) {
       const isQuotaError =

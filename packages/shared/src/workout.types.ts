@@ -101,3 +101,37 @@ export interface AuthResponse {
   user: UserDto;
   csrfToken?: string;
 }
+
+export interface MediaDto {
+  id: string;
+  workoutId?: string | null;
+  provider: string;
+  objectKey: string;
+  url: string;
+  mimeType: string;
+  fileSize: number;
+  checksum: string;
+  width?: number | null;
+  height?: number | null;
+  originalName?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface MediaMigrationStats {
+  candidates: number;
+  migrated: number;
+  skipped: number;
+  failed: number;
+  duplicates: number;
+  preservedSources: number;
+  dryRun: boolean;
+  details?: Array<{
+    workoutId: string;
+    workoutTitle: string;
+    status: "migrated" | "skipped" | "failed" | "duplicate";
+    reason?: string;
+    mediaId?: string;
+    objectKey?: string;
+  }>;
+}

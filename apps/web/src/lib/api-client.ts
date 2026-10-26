@@ -9,6 +9,7 @@ import type {
   AuthResponse,
   LoginInput,
   RegisterInput,
+  MediaDto,
 } from "@jerai/shared";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
@@ -49,8 +50,9 @@ export function getCsrfToken(): string | null {
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   const method = (options.method || "GET").toUpperCase();
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(!isFormData ? { "Content-Type": "application/json" } : {}),
     ...((options.headers as Record<string, string>) || {}),
   };
 
@@ -181,5 +183,25 @@ export const api = {
       // ignore
     }
     return null;
+  },
+
+  async uploadMedia(file: File | Blob, workoutId?: string): Promise<MediaDto> {
+    const formData = new FormData();
+    const filename = file instanceof File ? file.name : "workout-image.webp";
+    formData.append("file", file, filename);
+    if (workoutId) {
+      formData.append("workoutId", workoutId);
+    }
+    const res = await request<{ data: MediaDto }>("/media/upload", {
+      method: "POST",
+      body: formData,
+    });
+    return res.data;
+  },
+
+  async deleteMedia(id: string): Promise<void> {
+    await request<void>(`/media/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
   },
 };

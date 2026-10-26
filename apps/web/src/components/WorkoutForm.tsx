@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Plus, Eye, ImageIcon, Edit2, Trash2, X, Crop as CropIcon } from "lucide-react";
+import { Plus, Eye, ImageIcon, Edit2, Trash2, X, Crop as CropIcon, Loader2 } from "lucide-react";
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop, type PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { type Workout, type Difficulty, type BodyPart, BODY_PARTS } from "@/data/workouts";
+import { api, ApiError } from "@/lib/api-client";
+import { toast } from "sonner";
 
 interface WorkoutFormProps {
   initialData?: Workout;
@@ -34,6 +36,7 @@ export default function WorkoutForm({ initialData, onSave, onCancel }: WorkoutFo
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
@@ -106,10 +109,10 @@ export default function WorkoutForm({ initialData, onSave, onCancel }: WorkoutFo
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
 
-    // Constrain output dimensions to keep localStorage payload compact (max 800px)
+    // Constrain output dimensions to keep media resolution crisp yet efficient (max 1200px)
     const rawWidth = Math.floor(completedCrop.width * scaleX);
     const rawHeight = Math.floor(completedCrop.height * scaleY);
-    const maxDim = 800;
+    const maxDim = 1200;
     let targetWidth = rawWidth;
     let targetHeight = rawHeight;
     if (targetWidth > maxDim || targetHeight > maxDim) {
@@ -137,13 +140,61 @@ export default function WorkoutForm({ initialData, onSave, onCancel }: WorkoutFo
       targetHeight
     );
 
-    try {
-      const base64Image = canvas.toDataURL("image/webp", 0.85);
-      updateField("image", base64Image);
-      setCropSource("");
-    } catch {
-      setImageError("Failed to process cropped image. Please choose another image.");
-      setCropSource("");
+    setIsUploadingImage(true);
+    setImageError(null);
+
+    // Convert to blob and upload to object storage
+    if (typeof canvas.toBlob === "function") {
+      canvas.toBlob(
+        async (blob) => {
+          if (!blob) {
+            try {
+              const base64 = canvas.toDataURL("image/webp", 0.85);
+              updateField("image", base64);
+              setCropSource("");
+            } catch {
+              setImageError("Failed to process cropped image.");
+            } finally {
+              setIsUploadingImage(false);
+            }
+            return;
+          }
+
+          try {
+            const media = await api.uploadMedia(blob, initialData?.id);
+            updateField("image", media.url);
+            setCropSource("");
+            toast.success("Image uploaded to object storage successfully!");
+          } catch (err: unknown) {
+            const msg = err instanceof ApiError ? err.message : "Failed to upload image to storage server.";
+            console.warn("[Media Upload] Server upload failed, preserving local preview:", err);
+            try {
+              const dataUrl = canvas.toDataURL("image/webp", 0.85);
+              updateField("image", dataUrl);
+              setImageError(`${msg} (Local preview preserved)`);
+            } catch {
+              setImageError(msg);
+            }
+            setCropSource("");
+          } finally {
+            setIsUploadingImage(false);
+          }
+        },
+        "image/webp",
+        0.85
+      );
+    } else {
+      // Fallback for test / mock environments
+      try {
+        const base64Image = canvas.toDataURL("image/webp", 0.85);
+        updateField("image", base64Image);
+        setCropSource("");
+      } catch {
+        setImageError("Failed to process cropped image. Please choose another image.");
+        setCropSource("");
+      } finally {
+        setIsUploadingImage(false);
+      }
     }
   };
 
@@ -277,6 +328,11 @@ export default function WorkoutForm({ initialData, onSave, onCancel }: WorkoutFo
           {imageError && (
             <p className="text-xs text-destructive mt-1.5 font-medium">{imageError}</p>
           )}
+          {isUploadingImage && (
+            <div className="flex items-center gap-2 p-3 mt-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-medium">
+              <Loader2 className="w-4 h-4 animate-spin" /> Uploading image to secure storage...
+            </div>
+          )}
         </div>
 
         <div>
@@ -312,11 +368,18 @@ export default function WorkoutForm({ initialData, onSave, onCancel }: WorkoutFo
         <div className="flex gap-3 pt-2">
           <motion.button
             type="submit"
-            className="flex-1 py-3 rounded-2xl gradient-primary text-primary-foreground font-display font-semibold neon-glow"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            disabled={isUploadingImage}
+            className="flex-1 py-3 rounded-2xl gradient-primary text-primary-foreground font-display font-semibold neon-glow disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            whileHover={{ scale: isUploadingImage ? 1 : 1.02 }}
+            whileTap={{ scale: isUploadingImage ? 1 : 0.98 }}
           >
-            {isEditing ? "Save Changes" : "Add Workout"}
+            {isUploadingImage ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" /> Uploading...
+              </>
+            ) : (
+              isEditing ? "Save Changes" : "Add Workout"
+            )}
           </motion.button>
           <motion.button
             type="button"
@@ -421,10 +484,16 @@ export default function WorkoutForm({ initialData, onSave, onCancel }: WorkoutFo
               <button 
                 type="button"
                 onClick={handleConfirmCrop}
-                disabled={!completedCrop?.width || !completedCrop?.height}
-                className="px-6 py-2.5 rounded-xl gradient-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!completedCrop?.width || !completedCrop?.height || isUploadingImage}
+                className="px-6 py-2.5 rounded-xl gradient-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Confirm Crop
+                {isUploadingImage ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Uploading...
+                  </>
+                ) : (
+                  "Confirm Crop"
+                )}
               </button>
             </div>
           </motion.div>

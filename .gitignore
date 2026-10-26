@@ -37,3 +37,7 @@ playwright/.cache/
 *.njsproj
 *.sln
 *.sw?
+
+# Local media storage
+uploads/
+**/uploads/

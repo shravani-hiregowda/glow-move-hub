@@ -51,6 +51,7 @@ model Workout {
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
   steps       WorkoutStep[]
+  media       Media[]
 
   @@index([bodyPart])
   @@index([difficulty])
@@ -67,4 +68,26 @@ model WorkoutStep {
   @@unique([workoutId, stepOrder])
   @@index([workoutId])
   @@map("workout_steps")
+}
+
+model Media {
+  id           String    @id @default(uuid())
+  workoutId    String?   @map("workout_id")
+  provider     String    @default("local") @db.VarChar(50)
+  objectKey    String    @unique @map("object_key") @db.VarChar(500)
+  url          String    @db.VarChar(1000)
+  mimeType     String    @map("mime_type") @db.VarChar(100)
+  fileSize     Int       @map("file_size")
+  checksum     String    @db.VarChar(64)
+  width        Int?
+  height       Int?
+  originalName String?   @map("original_name") @db.VarChar(255)
+  legacySource String?   @map("legacy_source") @db.Text
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  workout      Workout?  @relation(fields: [workoutId], references: [id], onDelete: SetNull)
+
+  @@index([workoutId])
+  @@index([checksum])
+  @@map("media")
 }
