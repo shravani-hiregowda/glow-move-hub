@@ -19,7 +19,8 @@ model User {
   role         Role      @default(MEMBER)
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
-  sessions     Session[]
+  sessions        Session[]
+  workoutSessions WorkoutSession[]
 
   @@index([email])
   @@map("users")
@@ -50,8 +51,9 @@ model Workout {
   image       String        @db.VarChar(2000)
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
-  steps       WorkoutStep[]
-  media       Media[]
+  steps           WorkoutStep[]
+  media           Media[]
+  workoutSessions WorkoutSession[]
 
   @@index([bodyPart])
   @@index([difficulty])
@@ -90,4 +92,47 @@ model Media {
   @@index([workoutId])
   @@index([checksum])
   @@map("media")
+}
+
+enum WorkoutSessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+model WorkoutSession {
+  id               String               @id @default(uuid())
+  userId           String               @map("user_id")
+  workoutId        String               @map("workout_id")
+  status           WorkoutSessionStatus @default(IN_PROGRESS)
+  startedAt        DateTime             @default(now()) @map("started_at")
+  endedAt          DateTime?            @map("ended_at")
+  durationSeconds  Int                  @default(0) @map("duration_seconds")
+  currentStepIndex Int                  @default(0) @map("current_step_index")
+  workoutTitle     String               @map("workout_title") @db.VarChar(100)
+  workoutCalories  Int                  @default(0) @map("workout_calories")
+  totalSteps       Int                  @default(0) @map("total_steps")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+  user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workout          Workout              @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  completedSteps   WorkoutSessionStep[]
+
+  @@index([userId])
+  @@index([workoutId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("workout_sessions")
+}
+
+model WorkoutSessionStep {
+  id               String         @id @default(uuid())
+  workoutSessionId String         @map("workout_session_id")
+  stepIndex        Int            @map("step_index")
+  completedAt      DateTime       @default(now()) @map("completed_at")
+  workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+
+  @@unique([workoutSessionId, stepIndex])
+  @@index([workoutSessionId])
+  @@map("workout_session_steps")
 }

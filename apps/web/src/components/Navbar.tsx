@@ -1,7 +1,8 @@
-import { Moon, Sun, Dumbbell, Menu, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Moon, Sun, Dumbbell, Menu, X, LogIn, LogOut } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { AuthContext } from "@/contexts/AuthContext";
 
 interface NavbarProps {
   isDark: boolean;
@@ -14,6 +15,7 @@ const navItems = [
   { id: "home", label: "Home" },
   { id: "workouts", label: "Workouts" },
   { id: "tips", label: "Tips" },
+  { id: "progress", label: "Progress" },
   { id: "admin", label: "Admin" },
 ];
 
@@ -22,9 +24,15 @@ export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigat
   const navigate = useNavigate();
   const location = useLocation();
 
+  const auth = useContext(AuthContext);
+  const user = auth?.user ?? null;
+  const logout = auth?.logout ?? (async () => {});
+
   const handleNavClick = (id: string) => {
     if (id === "admin") {
       navigate("/admin");
+    } else if (id === "progress") {
+      navigate("/progress");
     } else if (id === "tips") {
       navigate("/tips");
     } else {
@@ -83,9 +91,29 @@ export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigat
               className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground hover:bg-primary/10 hover:text-primary transition-all"
               whileHover={{ scale: 1.1, rotate: 15 }}
               whileTap={{ scale: 0.9 }}
+              title="Toggle Theme"
             >
               {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </motion.button>
+
+            {user ? (
+              <motion.button
+                onClick={() => logout()}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-secondary hover:bg-secondary/80 text-xs font-semibold text-foreground transition-all"
+                title={`Signed in as ${user.email}`}
+              >
+                <LogOut className="w-3.5 h-3.5 text-muted-foreground" /> Sign Out
+              </motion.button>
+            ) : (
+              <motion.button
+                onClick={() => navigate("/login")}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl gradient-primary text-primary-foreground neon-glow text-xs font-semibold transition-all"
+                title="Sign In"
+              >
+                <LogIn className="w-3.5 h-3.5" /> Sign In
+              </motion.button>
+            )}
+
             <button
               className="md:hidden w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground"
               onClick={() => setMobileOpen(!mobileOpen)}

@@ -135,3 +135,44 @@ export interface MediaMigrationStats {
     objectKey?: string;
   }>;
 }
+
+export type WorkoutSessionStatus = "IN_PROGRESS" | "COMPLETED" | "ABANDONED";
+
+export const WORKOUT_SESSION_STATUSES: readonly WorkoutSessionStatus[] = [
+  "IN_PROGRESS",
+  "COMPLETED",
+  "ABANDONED",
+] as const;
+
+export interface WorkoutSessionStepDto {
+  id: string;
+  workoutSessionId: string;
+  stepIndex: number;
+  completedAt: string;
+}
+
+export interface WorkoutSessionDto {
+  id: string;
+  userId: string;
+  workoutId: string;
+  status: WorkoutSessionStatus;
+  startedAt: string;
+  endedAt: string | null;
+  durationSeconds: number;
+  currentStepIndex: number;
+  workoutTitle: string;
+  workoutCalories: number;
+  totalSteps: number;
+  completedStepIndices: number[];
+  createdAt: string;
+  updatedAt: string;
+  workout?: WorkoutDto;
+}
+
+export interface WorkoutProgressSummaryDto {
+  totalWorkoutsCompleted: number;
+  totalDurationSeconds: number;
+  totalCaloriesBurned: number;
+  activeSession: WorkoutSessionDto | null;
+  recentSessions: WorkoutSessionDto[];
+}

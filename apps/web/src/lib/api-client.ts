@@ -10,6 +10,12 @@ import type {
   LoginInput,
   RegisterInput,
   MediaDto,
+  WorkoutSessionDto,
+  WorkoutProgressSummaryDto,
+  StartWorkoutSessionInput,
+  UpdateWorkoutSessionProgressInput,
+  CompleteWorkoutSessionInput,
+  WorkoutSessionFilterQueryInput,
 } from "@jerai/shared";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
@@ -203,5 +209,80 @@ export const api = {
     await request<void>(`/media/${encodeURIComponent(id)}`, {
       method: "DELETE",
     });
+  },
+
+  // Workout Session & Progress endpoints
+  async startSession(input: StartWorkoutSessionInput): Promise<WorkoutSessionDto> {
+    const res = await request<{ data: WorkoutSessionDto }>("/sessions", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+    return res.data;
+  },
+
+  async getActiveSession(): Promise<WorkoutSessionDto | null> {
+    const res = await request<{ data: WorkoutSessionDto | null }>("/sessions/active");
+    return res.data;
+  },
+
+  async getSessionById(id: string): Promise<WorkoutSessionDto> {
+    const res = await request<{ data: WorkoutSessionDto }>(`/sessions/${encodeURIComponent(id)}`);
+    return res.data;
+  },
+
+  async updateSessionProgress(
+    id: string,
+    input: UpdateWorkoutSessionProgressInput
+  ): Promise<WorkoutSessionDto> {
+    const res = await request<{ data: WorkoutSessionDto }>(
+      `/sessions/${encodeURIComponent(id)}/progress`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      }
+    );
+    return res.data;
+  },
+
+  async completeSession(
+    id: string,
+    input?: CompleteWorkoutSessionInput
+  ): Promise<WorkoutSessionDto> {
+    const res = await request<{ data: WorkoutSessionDto }>(
+      `/sessions/${encodeURIComponent(id)}/complete`,
+      {
+        method: "POST",
+        body: JSON.stringify(input || {}),
+      }
+    );
+    return res.data;
+  },
+
+  async abandonSession(id: string): Promise<WorkoutSessionDto> {
+    const res = await request<{ data: WorkoutSessionDto }>(
+      `/sessions/${encodeURIComponent(id)}/abandon`,
+      {
+        method: "POST",
+      }
+    );
+    return res.data;
+  },
+
+  async getSessions(
+    query?: WorkoutSessionFilterQueryInput
+  ): Promise<PaginatedResponse<WorkoutSessionDto>> {
+    const params = new URLSearchParams();
+    if (query?.status) params.set("status", query.status);
+    if (query?.page) params.set("page", String(query.page));
+    if (query?.limit) params.set("limit", String(query.limit));
+
+    const qs = params.toString();
+    const endpoint = `/sessions${qs ? `?${qs}` : ""}`;
+    return request<PaginatedResponse<WorkoutSessionDto>>(endpoint);
+  },
+
+  async getSessionSummary(): Promise<WorkoutProgressSummaryDto> {
+    const res = await request<{ data: WorkoutProgressSummaryDto }>("/sessions/summary");
+    return res.data;
   },
 };

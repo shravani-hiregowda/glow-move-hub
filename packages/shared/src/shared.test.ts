@@ -6,6 +6,11 @@ import {
   workoutIdParamSchema,
   registerSchema,
   loginSchema,
+  startWorkoutSessionSchema,
+  updateWorkoutSessionProgressSchema,
+  completeWorkoutSessionSchema,
+  workoutSessionFilterQuerySchema,
+  sessionIdParamSchema,
 } from "./workout.schemas";
 
 
@@ -225,6 +230,86 @@ describe("Shared Workout Schemas", () => {
           password: "",
         });
         expect(result.success).toBe(false);
+      });
+    });
+  });
+
+  describe("Workout Session Schemas", () => {
+    describe("startWorkoutSessionSchema", () => {
+      it("accepts valid workoutId", () => {
+        const result = startWorkoutSessionSchema.safeParse({ workoutId: "w-chest-1" });
+        expect(result.success).toBe(true);
+      });
+
+      it("rejects empty or whitespace workoutId", () => {
+        const result = startWorkoutSessionSchema.safeParse({ workoutId: "   " });
+        expect(result.success).toBe(false);
+      });
+    });
+
+    describe("updateWorkoutSessionProgressSchema", () => {
+      it("accepts valid progress update", () => {
+        const result = updateWorkoutSessionProgressSchema.safeParse({
+          currentStepIndex: 2,
+          completedStepIndices: [0, 1],
+          durationSeconds: 120,
+        });
+        expect(result.success).toBe(true);
+      });
+
+      it("rejects empty object update", () => {
+        const result = updateWorkoutSessionProgressSchema.safeParse({});
+        expect(result.success).toBe(false);
+      });
+
+      it("rejects negative values", () => {
+        const result = updateWorkoutSessionProgressSchema.safeParse({
+          durationSeconds: -5,
+        });
+        expect(result.success).toBe(false);
+      });
+    });
+
+    describe("completeWorkoutSessionSchema", () => {
+      it("accepts valid complete payload", () => {
+        const result = completeWorkoutSessionSchema.safeParse({
+          durationSeconds: 300,
+          completedStepIndices: [0, 1, 2],
+        });
+        expect(result.success).toBe(true);
+      });
+
+      it("accepts empty complete payload", () => {
+        const result = completeWorkoutSessionSchema.safeParse({});
+        expect(result.success).toBe(true);
+      });
+    });
+
+    describe("workoutSessionFilterQuerySchema", () => {
+      it("defaults pagination values", () => {
+        const result = workoutSessionFilterQuerySchema.safeParse({});
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.page).toBe(1);
+          expect(result.data.limit).toBe(20);
+        }
+      });
+
+      it("accepts valid status filter", () => {
+        const result = workoutSessionFilterQuerySchema.safeParse({ status: "COMPLETED" });
+        expect(result.success).toBe(true);
+      });
+
+      it("rejects invalid status filter", () => {
+        const result = workoutSessionFilterQuerySchema.safeParse({ status: "PAUSED" });
+        expect(result.success).toBe(false);
+      });
+    });
+
+    describe("sessionIdParamSchema", () => {
+      it("validates session id", () => {
+        expect(sessionIdParamSchema.safeParse({ id: "sess-123" }).success).toBe(true);
+        expect(sessionIdParamSchema.safeParse({ id: "   " }).success).toBe(false);
       });
     });
   });

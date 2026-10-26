@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import TipsPage from "./pages/TipsPage.tsx";
 import Login from "./pages/Login.tsx";
+import ProgressDashboard from "./pages/ProgressDashboard.tsx";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -25,6 +26,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/tips" element={<TipsPage />} />
+              <Route path="/progress" element={<ProgressDashboard />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/admin" element={<AdminDashboard />} />
               </Route>

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BODY_PARTS, DIFFICULTY_VALUES } from "./workout.types";
+import { BODY_PARTS, DIFFICULTY_VALUES, WORKOUT_SESSION_STATUSES } from "./workout.types";
 
 export const workoutDifficultySchema = z.enum(
   DIFFICULTY_VALUES as unknown as [string, ...string[]]
@@ -130,3 +130,51 @@ export const mediaMigrationQuerySchema = z.object({
 
 export type MediaUploadQueryInput = z.infer<typeof mediaUploadQuerySchema>;
 export type MediaMigrationQueryInput = z.infer<typeof mediaMigrationQuerySchema>;
+
+export const workoutSessionStatusSchema = z.enum(
+  WORKOUT_SESSION_STATUSES as unknown as [string, ...string[]]
+);
+
+export const startWorkoutSessionSchema = z.object({
+  workoutId: z
+    .string({ required_error: "Workout ID is required" })
+    .trim()
+    .min(1, "Workout ID must not be empty")
+    .max(128, "Workout ID is too long"),
+});
+
+export const updateWorkoutSessionProgressSchema = z
+  .object({
+    currentStepIndex: z.number().int().min(0).max(100).optional(),
+    completedStepIndices: z.array(z.number().int().min(0).max(100)).optional(),
+    durationSeconds: z.number().int().min(0).max(86400).optional(),
+  })
+  .refine(
+    (data) => Object.keys(data).length > 0,
+    "At least one field must be provided for progress update"
+  );
+
+export const completeWorkoutSessionSchema = z.object({
+  durationSeconds: z.number().int().min(0).max(86400).optional(),
+  completedStepIndices: z.array(z.number().int().min(0).max(100)).optional(),
+});
+
+export const workoutSessionFilterQuerySchema = z.object({
+  status: workoutSessionStatusSchema.optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+});
+
+export const sessionIdParamSchema = z.object({
+  id: z
+    .string()
+    .trim()
+    .min(1, "Session ID must not be empty")
+    .max(128, "Session ID is too long"),
+});
+
+export type StartWorkoutSessionInput = z.infer<typeof startWorkoutSessionSchema>;
+export type UpdateWorkoutSessionProgressInput = z.infer<typeof updateWorkoutSessionProgressSchema>;
+export type CompleteWorkoutSessionInput = z.infer<typeof completeWorkoutSessionSchema>;
+export type WorkoutSessionFilterQueryInput = z.infer<typeof workoutSessionFilterQuerySchema>;
+export type SessionIdParamInput = z.infer<typeof sessionIdParamSchema>;

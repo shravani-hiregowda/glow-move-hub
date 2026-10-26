@@ -137,6 +137,28 @@ test.describe.serial("Phase 4 Authentication & Server-Enforced RBAC", () => {
     const prisma = new PrismaClient();
 
     try {
+      await prisma.workoutSessionStep.deleteMany({
+        where: {
+          workoutSession: {
+            user: {
+              email: {
+                startsWith: "e2e-",
+              },
+            },
+          },
+        },
+      });
+
+      await prisma.workoutSession.deleteMany({
+        where: {
+          user: {
+            email: {
+              startsWith: "e2e-",
+            },
+          },
+        },
+      });
+
       await prisma.session.deleteMany({
         where: {
           user: {
@@ -330,5 +352,237 @@ test.describe.serial("Phase 4 Authentication & Server-Enforced RBAC", () => {
     // Verify image upload label is visible
     await expect(page.locator("text=Workout Image")).toBeVisible();
     await expect(page.locator("text=PNG, JPG or WEBP (Max 5MB)")).toBeVisible();
+  });
+});
+
+test.describe.serial("Phase 6 Workout Sessions, Progress Tracking & Access Isolation", () => {
+  const ts = Date.now();
+  const P6_MEMBER_A_EMAIL = `e2e-p6-a-${ts}@test.local`;
+  const P6_MEMBER_B_EMAIL = `e2e-p6-b-${ts}@test.local`;
+  const P6_PASSWORD = "E2EPhase6Password123!";
+
+  test.beforeAll(async () => {
+    const { PrismaClient } = await import("@prisma/client");
+    const argon2 = (await import("argon2")).default;
+    const prisma = new PrismaClient();
+
+    try {
+      const passwordHash = await argon2.hash(P6_PASSWORD, {
+        type: argon2.argon2id,
+        memoryCost: 65536,
+        timeCost: 3,
+        parallelism: 1,
+      });
+
+      await prisma.user.createMany({
+        data: [
+          { email: P6_MEMBER_A_EMAIL, passwordHash, role: "MEMBER" },
+          { email: P6_MEMBER_B_EMAIL, passwordHash, role: "MEMBER" },
+        ],
+      });
+    } finally {
+      await prisma.$disconnect();
+    }
+  });
+
+  test.afterAll(async () => {
+    const { PrismaClient } = await import("@prisma/client");
+    const prisma = new PrismaClient();
+
+    try {
+      await prisma.workoutSessionStep.deleteMany({
+        where: {
+          workoutSession: {
+            user: {
+              email: { startsWith: "e2e-p6-" },
+            },
+          },
+        },
+      });
+
+      await prisma.workoutSession.deleteMany({
+        where: {
+          user: {
+            email: { startsWith: "e2e-p6-" },
+          },
+        },
+      });
+
+      await prisma.session.deleteMany({
+        where: {
+          user: {
+            email: { startsWith: "e2e-p6-" },
+          },
+        },
+      });
+
+      await prisma.user.deleteMany({
+        where: {
+          email: { startsWith: "e2e-p6-" },
+        },
+      });
+    } finally {
+      await prisma.$disconnect();
+    }
+  });
+
+  test("10. Member starts a workout session, toggles steps, completes it, and verifies progress history", async ({
+    page,
+  }) => {
+    // Log in as Member A
+    await page.goto("/login");
+    await page.getByPlaceholder("Email address").fill(P6_MEMBER_A_EMAIL);
+    await page.getByPlaceholder(/Password/i).fill(P6_PASSWORD);
+    await Promise.all([
+      page.waitForResponse((resp) => resp.url().includes("/api/v1/auth/login")),
+      page.getByRole("button", { name: /authenticate/i }).click(),
+    ]);
+    await expect(page).toHaveURL(/\/?$/);
+
+    // Open first workout ("Push-Up Power")
+    const card = page.getByRole("heading", { name: "Push-Up Power" }).first();
+    await card.click();
+
+    // Verify modal is visible
+    await expect(page.locator("h2:has-text('Push-Up Power')")).toBeVisible();
+
+    // Start timer / session
+    const startBtn = page.getByRole("button", { name: "Start", exact: true });
+    await Promise.all([
+      page.waitForResponse(
+        (resp) => resp.url().includes("/api/v1/sessions") && resp.request().method() === "POST"
+      ),
+      startBtn.click(),
+    ]);
+
+    // Verify Session Active badge is displayed
+    await expect(page.locator("text=Session Active")).toBeVisible();
+
+    // Toggle a step
+    const stepBtn = page.locator(".space-y-3 button").first();
+    await Promise.all([
+      page.waitForResponse(
+        (resp) => resp.url().includes("/progress") && resp.request().method() === "PATCH"
+      ),
+      stepBtn.click(),
+    ]);
+
+    // Complete the workout session
+    const completeBtn = page.getByTestId("complete-workout-btn");
+    await Promise.all([
+      page.waitForResponse(
+        (resp) => resp.url().includes("/complete") && resp.request().method() === "POST"
+      ),
+      completeBtn.click(),
+    ]);
+
+    // Verify completion feedback
+    await expect(page.locator("text=Session Completed!")).toBeVisible();
+
+    // Close modal
+    const closeBtn = page.locator("button:has(svg.lucide-x)").first();
+    await closeBtn.click();
+
+    // Navigate to Progress Dashboard
+    await page.goto("/progress");
+    await expect(page.locator("h1")).toContainText(/Workout.*Progress & History/i);
+
+    // Verify Workouts Completed metric is 1
+    await expect(page.locator("h2:has-text('1')").first()).toBeVisible();
+
+    // Verify session appears in history table with COMPLETED status
+    await expect(page.locator("h4:has-text('Push-Up Power')").first()).toBeVisible();
+    await expect(page.locator("span:has-text('COMPLETED')").first()).toBeVisible();
+  });
+
+  test("11. Active session state survives page refresh and can be resumed or abandoned", async ({
+    page,
+  }) => {
+    // Log in as Member A
+    await page.goto("/login");
+    await page.getByPlaceholder("Email address").fill(P6_MEMBER_A_EMAIL);
+    await page.getByPlaceholder(/Password/i).fill(P6_PASSWORD);
+    await Promise.all([
+      page.waitForResponse((resp) => resp.url().includes("/api/v1/auth/login")),
+      page.getByRole("button", { name: /authenticate/i }).click(),
+    ]);
+    await expect(page).toHaveURL(/\/?$/);
+
+    // Open workout "Dumbbell Bench Press"
+    const card = page.getByRole("heading", { name: "Dumbbell Bench Press" }).first();
+    await card.click();
+
+    // Start workout session
+    const startBtn = page.getByRole("button", { name: "Start", exact: true });
+    await Promise.all([
+      page.waitForResponse(
+        (resp) => resp.url().includes("/api/v1/sessions") && resp.request().method() === "POST"
+      ),
+      startBtn.click(),
+    ]);
+
+    await expect(page.locator("text=Session Active")).toBeVisible();
+
+    // Simulate page refresh during active session
+    await page.reload();
+
+    // Navigate to /progress
+    await page.goto("/progress");
+
+    // Verify Active Workout banner appears on Progress Dashboard
+    await expect(page.locator("text=Active Workout In Progress")).toBeVisible();
+    await expect(page.locator("h3:has-text('Dumbbell Bench Press')")).toBeVisible();
+
+    // Click Resume Workout
+    const resumeBtn = page.getByRole("button", { name: /resume workout/i });
+    await resumeBtn.click();
+
+    // Verify workout modal reopened for this active workout with active status
+    await expect(page.locator("h2:has-text('Dumbbell Bench Press')")).toBeVisible();
+    await expect(page.locator("text=Session Active")).toBeVisible();
+
+    // Abandon session
+    const abandonBtn = page.getByTestId("abandon-workout-btn");
+    await Promise.all([
+      page.waitForResponse(
+        (resp) => resp.url().includes("/abandon") && resp.request().method() === "POST"
+      ),
+      abandonBtn.click(),
+    ]);
+
+    // Close modal
+    const closeBtn = page.locator("button:has(svg.lucide-x)").first();
+    await closeBtn.click();
+
+    // Refresh progress page and verify active session is gone and appears as ABANDONED in history
+    await page.goto("/progress");
+    await expect(page.locator("text=Active Workout In Progress")).not.toBeVisible();
+    await expect(page.locator("span:has-text('ABANDONED')").first()).toBeVisible();
+  });
+
+  test("12. Member B cannot read or mutate Member A's workout session records", async ({
+    browser,
+  }) => {
+    // Create new isolated browser context for Member B
+    const memberBContext = await browser.newContext();
+    const pageB = await memberBContext.newPage();
+
+    // Log in as Member B
+    await pageB.goto("/login");
+    await pageB.getByPlaceholder("Email address").fill(P6_MEMBER_B_EMAIL);
+    await pageB.getByPlaceholder(/Password/i).fill(P6_PASSWORD);
+    await Promise.all([
+      pageB.waitForResponse((resp) => resp.url().includes("/api/v1/auth/login")),
+      pageB.getByRole("button", { name: /authenticate/i }).click(),
+    ]);
+    await expect(pageB).toHaveURL(/\/?$/);
+
+    // Navigate to /progress as Member B
+    await pageB.goto("/progress");
+
+    // Member B should have 0 completed workouts and empty history
+    await expect(pageB.locator("h2:has-text('0')").first()).toBeVisible();
+    await expect(pageB.locator("text=No workout sessions found")).toBeVisible();
+    await memberBContext.close();
   });
 });
