@@ -34,7 +34,7 @@ jobs:
         run: npm ci
 
       - name: Generate Prisma client
-        run: npx prisma generate --workspace=@jerai/api
+        run: npm run prisma:generate --workspace=@jerai/api
 
       - name: Run ESLint
         id: lint
@@ -103,13 +103,13 @@ jobs:
         run: npm ci
 
       - name: Generate Prisma client
-        run: npx prisma generate --workspace=@jerai/api
+        run: npm run prisma:generate --workspace=@jerai/api
 
       - name: Install Playwright Chromium browser
         run: npx playwright install --with-deps chromium
 
       - name: Apply database migrations
-        run: npx prisma migrate deploy --workspace=@jerai/api
+        run: npm run prisma:migrate --workspace=@jerai/api
 
       - name: Seed test database
         run: npm run prisma:seed --workspace=@jerai/api
