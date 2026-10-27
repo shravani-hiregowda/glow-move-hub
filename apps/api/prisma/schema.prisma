@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  MEMBER
+  ADMIN
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique @db.VarChar(255)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  role         Role      @default(MEMBER)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  sessions        Session[]
+  workoutSessions WorkoutSession[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique @map("token_hash") @db.VarChar(64)
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Workout {
+  id          String        @id @default(uuid())
+  title       String        @db.VarChar(100)
+  description String        @db.Text
+  difficulty  String        @db.VarChar(50)
+  bodyPart    String        @map("body_part") @db.VarChar(50)
+  duration    String        @db.VarChar(50)
+  calories    Int
+  videoUrl    String        @map("video_url") @db.VarChar(500)
+  image       String        @db.VarChar(2000)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  steps           WorkoutStep[]
+  media           Media[]
+  workoutSessions WorkoutSession[]
+
+  @@index([bodyPart])
+  @@index([difficulty])
+  @@map("workouts")
+}
+
+model WorkoutStep {
+  id          String   @id @default(uuid())
+  workoutId   String   @map("workout_id")
+  stepOrder   Int      @map("step_order")
+  instruction String   @db.Text
+  workout     Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+
+  @@unique([workoutId, stepOrder])
+  @@index([workoutId])
+  @@map("workout_steps")
+}
+
+model Media {
+  id           String    @id @default(uuid())
+  workoutId    String?   @map("workout_id")
+  provider     String    @default("local") @db.VarChar(50)
+  objectKey    String    @unique @map("object_key") @db.VarChar(500)
+  url          String    @db.VarChar(1000)
+  mimeType     String    @map("mime_type") @db.VarChar(100)
+  fileSize     Int       @map("file_size")
+  checksum     String    @db.VarChar(64)
+  width        Int?
+  height       Int?
+  originalName String?   @map("original_name") @db.VarChar(255)
+  legacySource String?   @map("legacy_source") @db.Text
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  workout      Workout?  @relation(fields: [workoutId], references: [id], onDelete: SetNull)
+
+  @@index([workoutId])
+  @@index([checksum])
+  @@map("media")
+}
+
+enum WorkoutSessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+model WorkoutSession {
+  id               String               @id @default(uuid())
+  userId           String               @map("user_id")
+  workoutId        String               @map("workout_id")
+  status           WorkoutSessionStatus @default(IN_PROGRESS)
+  startedAt        DateTime             @default(now()) @map("started_at")
+  endedAt          DateTime?            @map("ended_at")
+  durationSeconds  Int                  @default(0) @map("duration_seconds")
+  currentStepIndex Int                  @default(0) @map("current_step_index")
+  workoutTitle     String               @map("workout_title") @db.VarChar(100)
+  workoutCalories  Int                  @default(0) @map("workout_calories")
+  totalSteps       Int                  @default(0) @map("total_steps")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+  user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workout          Workout              @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  completedSteps   WorkoutSessionStep[]
+
+  @@index([userId])
+  @@index([workoutId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("workout_sessions")
+}
+
+model WorkoutSessionStep {
+  id               String         @id @default(uuid())
+  workoutSessionId String         @map("workout_session_id")
+  stepIndex        Int            @map("step_index")
+  completedAt      DateTime       @default(now()) @map("completed_at")
+  workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+
+  @@unique([workoutSessionId, stepIndex])
+  @@index([workoutSessionId])
+  @@map("workout_session_steps")
+}
