@@ -34,6 +34,12 @@ export function proxyAuthGuard(req: Request, res: Response, next: NextFunction):
   const proxySecret = env.PROXY_SECRET;
   const isEnforced = isProduction || env.REQUIRE_PROXY_AUTH === "true";
 
+  // Exempt platform health check probes from proxy secret requirement so Render / container orchestrators can verify liveness
+  if (req.path === "/health" || req.path === "/api/v1/health") {
+    req.isProxyVerified = false;
+    return next();
+  }
+
   // Production fail-closed check: server must be configured with a proxy secret
   if (isProduction && (!proxySecret || proxySecret.trim().length === 0)) {
     res.status(500).json({

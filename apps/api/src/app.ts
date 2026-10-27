@@ -58,7 +58,8 @@ export function createApp() {
   // Session authentication (attaches user and session to request if cookie present)
   app.use(authenticateSession);
 
-  // API v1 routes
+  // API v1 routes & root health probe
+  app.use("/health", healthRoutes);
   app.use("/api/v1", healthRoutes);
   app.use("/api/v1", authRoutes);
   app.use("/api/v1", workoutRoutes);

@@ -13,6 +13,7 @@
     "build": "npm run build --workspace=@jerai/web && npm run build --workspace=@jerai/api",
     "build:web": "npm run build --workspace=@jerai/web",
     "build:api": "npm run build --workspace=@jerai/api",
+    "start:api": "npm run start --workspace=@jerai/api",
     "lint": "eslint .",
     "test": "npm run test:shared && npm run test:web && npm run test:api",
     "test:shared": "npm run test --workspace=@jerai/shared",

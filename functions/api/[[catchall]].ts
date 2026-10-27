@@ -1,4 +1,5 @@
 export interface PagesEnv {
+  BACKEND_API_URL?: string;
   RENDER_API_URL?: string;
   PROXY_SECRET?: string;
 }
@@ -23,11 +24,13 @@ export async function handleApiProxyRequest(
   request: Request,
   env: PagesEnv
 ): Promise<Response> {
+  const upstreamUrlString = env.BACKEND_API_URL || env.RENDER_API_URL;
+
   // 1. Fail-closed: Validate required environment variables
   if (
-    !env.RENDER_API_URL ||
-    typeof env.RENDER_API_URL !== "string" ||
-    env.RENDER_API_URL.trim().length === 0 ||
+    !upstreamUrlString ||
+    typeof upstreamUrlString !== "string" ||
+    upstreamUrlString.trim().length === 0 ||
     !env.PROXY_SECRET ||
     typeof env.PROXY_SECRET !== "string" ||
     env.PROXY_SECRET.trim().length === 0
@@ -50,7 +53,7 @@ export async function handleApiProxyRequest(
   // 2. Validate upstream URL origin
   let upstreamOrigin: URL;
   try {
-    upstreamOrigin = new URL(env.RENDER_API_URL.trim());
+    upstreamOrigin = new URL(upstreamUrlString.trim());
     if (upstreamOrigin.protocol !== "https:" && upstreamOrigin.protocol !== "http:") {
       throw new Error("Invalid protocol");
     }
