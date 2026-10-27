@@ -77,13 +77,11 @@ export async function main() {
   console.log(`[Seed] Completed. Created: ${createdCount}, Updated/Verified: ${updatedCount}`);
 }
 
-if (process.env.NODE_ENV !== "test") {
-  main()
-    .catch((e) => {
-      console.error("[Seed] Failed to seed database:", e);
-      process.exit(1);
-    })
-    .finally(async () => {
-      await prisma.$disconnect();
-    });
-}
+main()
+  .catch((e) => {
+    console.error("[Seed] Failed to seed database:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
