@@ -1,45 +1,71 @@
 # JERAI FIT (Glow Move Hub) — Full-Stack Monorepo
 
-JERAI FIT is a full-stack fitness workout platform built with React, Vite, Tailwind CSS, Node.js, Express, TypeScript, Prisma ORM, and PostgreSQL.
+JERAI FIT is an enterprise-grade, full-stack fitness and workout platform built with React, Vite, Tailwind CSS, Node.js, Express, TypeScript, Prisma ORM, and PostgreSQL.
 
-> **Status Notice**: The project is currently at **Phase 3 (PostgreSQL-Backed API Foundation)**. It is an evolving software engineering application and is **not yet production-ready**. Writes to the API are fail-closed by default until Phase 4 (Authentication & Authorization).
+> **Status Notice**: The project has completed **Phases 1 through 7C**, featuring a production-hardened monorepo, server-side authentication, role-based access control (RBAC), pluggable object storage, live workout session tracking, an interactive progress dashboard, active workout state protection, Cloudflare Pages reverse proxy, and Neon serverless database pooling support.
+
+---
+
+## Implemented Architecture & Roadmap (Phases 1 – 7C)
+
+| Phase | Milestone | Core Highlights |
+|---|---|---|
+| **Phase 1 & 2** | UI Baseline & Experience | React 18 SPA, Tailwind CSS, dark/light theme, exercise explorer, focus mode workout timer. |
+| **Phase 3** | Full-Stack Monorepo Foundation | Workspace separation (`@jerai/shared`, `@jerai/web`, `@jerai/api`), PostgreSQL with Prisma ORM, TanStack Query v5. |
+| **Phase 4** | Auth & Server-Enforced RBAC | Argon2id password hashing, database-persisted session rotation, `HttpOnly` cookies, CSRF protection, interactive CLI admin bootstrap (`npm run admin:bootstrap`), server-enforced role access (`MEMBER` vs `ADMIN`). |
+| **Phase 5** | Pluggable Object Storage | Local disk, Amazon S3, and Cloudflare R2 storage drivers, strict file inspection (magic bytes, MIME validation), media upload endpoints, and media asset migration script. |
+| **Phase 6** | Live Sessions & Progress Tracking | Persistent workout sessions (`WorkoutSession` model), live timer with pause/resume, RPE exertion rating and notes, and user `ProgressDashboard` with streaks and activity history. |
+| **Phase 7b** | Hardening, Active Guards & CI | Active workout session exit protection (confirmation dialog to prevent progress loss), dirty session state warnings, and automated GitHub Actions CI pipeline (`.github/workflows/ci.yml`). |
+| **Phase 7c** | Edge Proxy & Cloudflare Integration | Cloudflare Pages Functions reverse proxy (`functions/api/[[catchall]].ts`), fail-closed proxy secret authentication (`x-proxy-secret`), anti-spoofing rate limiting, and Neon serverless PostgreSQL connection pooling (`directUrl`). |
 
 ---
 
 ## Architecture Overview
 
-JERAI FIT is organized as an npm workspaces monorepo containing three core packages:
-
 ```mermaid
 graph TD
-    subgraph Client ["apps/web (Port 8080)"]
-        UI[React 18 + Tailwind CSS]
+    subgraph Edge ["Cloudflare Pages Edge"]
+        CF[Cloudflare Pages Functions Proxy<br/>functions/api/catchall.ts]
+    end
+
+    subgraph Client ["apps/web (Frontend)"]
+        UI[React 18 + Tailwind CSS + Lucide]
         RQ[TanStack Query v5]
         APIClient[Centralized API Client]
         UI --> RQ --> APIClient
     end
 
-    subgraph Server ["apps/api (Port 3000)"]
+    subgraph Server ["apps/api (Backend REST API)"]
+        ProxyAuth[Proxy Secret Guard / Anti-Spoofing]
+        RateLimiter[Rate Limit Middleware]
         Express[Express REST API /api/v1]
-        WriteGuard[Fail-Closed Write Guard]
+        AuthGuard[Session Auth & RBAC Guard]
         Validator[Zod Request Validation]
         Prisma[Prisma ORM Client]
-        Express --> WriteGuard --> Validator --> Prisma
+        StorageService[Pluggable Storage Driver<br/>Local / Cloudflare R2 / S3]
+
+        ProxyAuth --> RateLimiter --> Express --> AuthGuard --> Validator --> Prisma
+        Express --> StorageService
     end
 
-    subgraph Database ["PostgreSQL"]
-        WorkoutsTable[(Workouts Table)]
-        StepsTable[(WorkoutSteps Table)]
+    subgraph Database ["PostgreSQL (e.g., Neon Serverless)"]
+        UsersTable[(Users Table)]
+        SessionsTable[(Sessions Table)]
+        WorkoutsTable[(Workouts & Steps Tables)]
+        WorkoutSessionsTable[(WorkoutSessions Table)]
+        Prisma --> UsersTable
+        Prisma --> SessionsTable
         Prisma --> WorkoutsTable
-        Prisma --> StepsTable
+        Prisma --> WorkoutSessionsTable
     end
 
     subgraph Shared ["packages/shared"]
-        Types[TypeScript Types & Contracts]
+        Types[TypeScript Domain Contracts]
         Schemas[Zod Validation Schemas]
     end
 
-    APIClient -.-> Express
+    APIClient -.-> CF
+    CF -.-> ProxyAuth
     UI -.-> Types
     Express -.-> Types
     Express -.-> Schemas
@@ -47,18 +73,19 @@ graph TD
 
 ### Monorepo Structure
 
-- **`packages/shared`** (`@jerai/shared`): Shared TypeScript domain types, DTO contracts, and shared Zod validation schemas.
+- **`packages/shared`** (`@jerai/shared`): Shared TypeScript domain types, DTO contracts, and shared Zod validation schemas for workouts, authentication, sessions, and media.
 - **`apps/web`** (`@jerai/web`): React 18 single-page application built with Vite, Tailwind CSS, Lucide icons, Framer Motion, and TanStack React Query.
-- **`apps/api`** (`@jerai/api`): Node.js + Express REST API backed by Prisma ORM and PostgreSQL.
-- **`apps/api/prisma`**: Committed schema (`schema.prisma`), idempotent seed script (`seed.ts`), and versioned SQL migration (`migrations/20261025000000_init_workouts`).
+- **`apps/api`** (`@jerai/api`): Node.js + Express REST API backed by Prisma ORM, PostgreSQL, and pluggable object storage.
+- **`functions`**: Cloudflare Pages Functions reverse proxy for zero-CORS frontend-to-backend edge routing.
+- **`apps/api/prisma`**: Committed schema (`schema.prisma`), idempotent seed script (`seed.ts`), and versioned SQL migrations supporting Neon connection pooling.
 
 ---
 
 ## Prerequisites
 
-- **Node.js**: `v20.x` or `v22.x`+ (Tested on Node `v24.13.0`)
-- **npm**: `v10.x`+ (Tested on npm `v11.6.2`)
-- **PostgreSQL**: Version 14 or higher (local installation, Docker, or managed cloud instance)
+- **Node.js**: `v20.x` or `v22.x`+ (Tested on Node `v22.x` and `v24.x`)
+- **npm**: `v10.x`+ (Tested on npm `v11.x`)
+- **PostgreSQL**: Version 14 or higher (local installation, Docker, or managed cloud instance like Neon)
 
 ---
 
@@ -73,16 +100,22 @@ Never commit credentials, connection strings, or `.env` files. Both root and wor
 
 2. Configure environment variables in `.env`:
 
-| Variable | Target | Description | Example |
+| Variable | Target | Description | Example / Default |
 |---|---|---|---|
-| `NODE_ENV` | Server | Runtime mode (`development`, `production`, `test`) | `development` |
-| `PORT` | Server | API HTTP server port | `3000` |
-| `DATABASE_URL` | Server | PostgreSQL connection string (**server-side only**) | `postgresql://postgres:postgres@localhost:5432/jerai_fit?schema=public` |
-| `CORS_ORIGIN` | Server | Allowed CORS frontend origin | `http://localhost:8080` |
-| `VITE_API_URL` | Client | Base URL for the backend API | `http://localhost:3000/api/v1` |
-| `ADMIN_EMAIL` | Script | Initial admin email (**bootstrap only**) | `admin@example.com` |
-| `ADMIN_PASSWORD` | Script | Initial admin password (**bootstrap only**, min 8 chars) | `(secure passphrase)` |
-
+| `NODE_ENV` | Server | Runtime environment (`development`, `production`, `test`) | `development` |
+| `PORT` | Server | API HTTP server port | `3000` (or `3001` in test) |
+| `DATABASE_URL` | Server | PostgreSQL connection string (supports pooled connection strings) | `postgresql://postgres:postgres@localhost:5432/jerai_fit?schema=public` |
+| `DIRECT_URL` | Server | Direct PostgreSQL connection string for Prisma migrations (Neon PgBouncer bypass) | `postgresql://postgres:postgres@localhost:5432/jerai_fit?schema=public` |
+| `CORS_ORIGIN` | Server | Allowed CORS frontend origin | `http://localhost:5173` |
+| `VITE_API_URL` | Client | Base URL for the backend API (or relative `/api/v1` when using proxy) | `/api/v1` |
+| `STORAGE_DRIVER` | Server | Object storage provider (`local`, `r2`, or `s3`) | `local` |
+| `STORAGE_LOCAL_DIR` | Server | Relative local upload directory (when driver is `local`) | `uploads` |
+| `STORAGE_MAX_FILE_SIZE_BYTES` | Server | Maximum allowable media upload size in bytes | `5242880` (5 MB) |
+| `PROXY_SECRET` | Server | Shared secret for Cloudflare Pages Functions reverse proxy | `(64-character random string)` |
+| `REQUIRE_PROXY_AUTH` | Server | Fail-closed enforcement for reverse proxy header in production | `false` (dev) / `true` (prod) |
+| `TRUST_PROXY` | Server | Express proxy hop trust count for anti-spoofing rate limiting | `1` (behind proxy) |
+| `ADMIN_EMAIL` | Script | Initial admin email (**bootstrap script / CI only**) | `admin@example.com` |
+| `ADMIN_PASSWORD` | Script | Initial admin password (**bootstrap script / CI only**) | `(secure passphrase)` |
 
 ---
 
@@ -94,9 +127,10 @@ Never commit credentials, connection strings, or `.env` files. Both root and wor
    ```sql
    CREATE DATABASE jerai_fit;
    ```
-2. Update `DATABASE_URL` in your `.env` file:
+2. Update `DATABASE_URL` and `DIRECT_URL` in your `.env` file:
    ```env
    DATABASE_URL="postgresql://<username>:<password>@localhost:5432/jerai_fit?schema=public"
+   DIRECT_URL="postgresql://<username>:<password>@localhost:5432/jerai_fit?schema=public"
    ```
 
 ### Option B: Docker Container
@@ -105,12 +139,15 @@ Never commit credentials, connection strings, or `.env` files. Both root and wor
 docker run --name jerai-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=jerai_fit -p 5432:5432 -d postgres:16
 ```
 
-### Option C: Free / Low-Cost Hosted PostgreSQL Providers
+### Option C: Neon Serverless PostgreSQL (Recommended for Cloud)
 
-You can connect to standard managed PostgreSQL tiers (e.g., Neon Serverless Postgres or Supabase). Note that provider free tier availability and quotas are subject to vendor terms.
-Ensure the connection string uses SSL parameters where required by the provider:
+Neon provides connection pooling via PgBouncer. To support both connection pooling and migrations:
 ```env
-DATABASE_URL="postgresql://user:password@ep-sample-pool.us-east-2.aws.neon.tech/jerai_fit?sslmode=require"
+# Pooled connection string for regular queries
+DATABASE_URL="postgresql://user:password@ep-sample-pool.us-east-2.aws.neon.tech/jerai_fit?sslmode=require&pgbouncer=true"
+
+# Direct connection string for Prisma migrations
+DIRECT_URL="postgresql://user:password@ep-sample.us-east-2.aws.neon.tech/jerai_fit?sslmode=require"
 ```
 
 ### Running Migrations & Seeding
@@ -135,9 +172,9 @@ DATABASE_URL="postgresql://user:password@ep-sample-pool.us-east-2.aws.neon.tech/
 
 ---
 
-## Running the Application
+## Running the Application Locally
 
-### 1. Start the Backend API (Port 3000)
+### 1. Start the Backend API (Port 3000 / 3001)
 
 ```bash
 npm run dev:api
@@ -154,144 +191,89 @@ Open `http://localhost:5173` in your browser.
 
 ---
 
-## Versioned REST API Endpoints (`/api/v1`)
+## Core Feature Modules
 
-All API responses follow a consistent structured JSON schema.
-
-### `GET /api/v1/health`
-Checks application status and live PostgreSQL connectivity.
-
-**Response (200 OK)**:
-```json
-{
-  "status": "ok",
-  "service": "jerai-fit-api",
-  "timestamp": "2026-10-25T14:00:00.000Z",
-  "database": {
-    "connected": true
-  },
-  "environment": "development"
-}
-```
-
-### `GET /api/v1/workouts`
-List workouts with pagination, filtering, and full-text search.
-
-- **Query Parameters**:
-  - `bodyPart`: e.g. `Chest`, `Back`, `Legs`, `Cardio`
-  - `difficulty`: `Beginner`, `Intermediate`, `Advanced`
-  - `search`: Search query matching title or description
-  - `page`: Page number (default: `1`)
-  - `limit`: Items per page (default: `50`, maximum: `100`)
-
-**Response (200 OK)**:
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "1",
-      "title": "Push-Up Power",
-      "difficulty": "Beginner",
-      "bodyPart": "Chest",
-      "duration": "15 min",
-      "calories": 120,
-      "videoUrl": "https://www.youtube.com/embed/IODxDxX7oi4",
-      "image": "/assets/workout-1.jpg",
-      "description": "Master the classic push-up with perfect form.",
-      "steps": ["Start in high plank", "Lower chest", "Push back up"],
-      "createdAt": "2026-10-25T14:00:00.000Z",
-      "updatedAt": "2026-10-25T14:00:00.000Z"
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 50,
-    "total": 30,
-    "totalPages": 1
-  }
-}
-```
-
-### `GET /api/v1/workouts/:id`
-Fetch a single workout with its ordered steps. Returns `404` if not found.
-
-### `POST /api/v1/workouts`
-Create a new workout. Requires authenticated session with `ADMIN` role. Anonymous users receive `401 Unauthorized`; `MEMBER` users receive `403 Forbidden`.
-
-### `PUT /api/v1/workouts/:id`
-Update an existing workout and synchronize steps. Requires authenticated session with `ADMIN` role. Anonymous users receive `401 Unauthorized`; `MEMBER` users receive `403 Forbidden`.
-
-### `DELETE /api/v1/workouts/:id`
-Delete a workout. Cascades to steps. Requires authenticated session with `ADMIN` role. Anonymous users receive `401 Unauthorized`; `MEMBER` users receive `403 Forbidden`.
-
----
-
-## Authentication & Role-Based Access Control (Phase 4)
-
-### Authentication Endpoints
-
-- `POST /api/v1/auth/register`: Public registration. Enforces Argon2id password hashing and always assigns `MEMBER` role. Returns generic duplicate errors on conflict.
-- `POST /api/v1/auth/login`: Validates credentials, rotates session identifier, sets `HttpOnly`, `SameSite=Lax`, bounded-lifetime session cookie, and issues anti-CSRF token. Rate limited.
-- `GET /api/v1/auth/me`: Restores current authenticated user profile and role. Returns `401` if unauthenticated or expired.
-- `POST /api/v1/auth/logout`: Revokes session record on the server and clears cookies.
-- `GET /api/v1/auth/csrf`: Generates or retrieves current anti-CSRF token.
-
-### Security Architecture
-
-- **Password Hashing**: Argon2id (`m=65536, t=3, p=1`) per OWASP recommendations. Never stores plaintext passwords.
-- **Session Model**: Unguessable cryptographically random session tokens (32 bytes hex). Only SHA-256 hash of token is persisted in PostgreSQL.
-- **Cookie Flags**: `HttpOnly`, `SameSite=Lax`, `Secure` in production, bounded 7-day lifetime.
-- **Anti-CSRF Protection**:
-  1. Strict `Origin` and `Referer` validation against whitelist on all state-changing requests (`POST`, `PUT`, `DELETE`).
-  2. Double-Submit Cookie verification with `X-CSRF-Token` header for cookie-authenticated mutations.
-- **Role Hierarchy**:
+### 1. Authentication & Role-Based Access Control (Phase 4)
+- **Password Security**: Argon2id hashing (`m=65536, t=3, p=1`) per OWASP recommendations.
+- **Session Architecture**: Cryptographically random 32-byte tokens hashed with SHA-256 in PostgreSQL. 7-day bounded lifetime with `HttpOnly`, `SameSite=Lax` cookies.
+- **CSRF Protection**: Whitelisted origin validation and Double-Submit Cookie verification with `X-CSRF-Token` headers.
+- **Role Enforcement**:
   - `Public / Anonymous`: Read-only access to workouts.
-  - `MEMBER`: Authenticated member profile; rejected (`403 Forbidden`) on workout modifications.
-  - `ADMIN`: Full workout management and library CRUD permissions.
+  - `MEMBER`: Workout session tracking, personal progress history; blocked (403 Forbidden) from catalog edits.
+  - `ADMIN`: Full workout management, step re-ordering, and media asset upload permissions.
 
-### Administrator Bootstrap
-
-The application does not ship default administrator credentials or a public promotion endpoint. To create the initial administrator securely without exposing the password in shell history or process tables:
-
+### 2. Administrator Bootstrap
+To securely initialize the first administrator account without exposing passwords in shell history:
 ```bash
 npm run admin:bootstrap
 ```
+Prompts interactively for email and masked password. Refuses to overwrite existing administrators.
 
-The script will interactively prompt for:
-1. Administrator Email
-2. Administrator Password (hidden input, suppressing terminal echo)
+### 3. Object Storage & Media Management (Phase 5)
+- **Drivers**: Pluggable architecture supporting `local` (offline dev), `r2` (Cloudflare R2), or `s3` (AWS S3).
+- **Validation**: Strict magic byte inspection to verify true image and video binary formats before persistence.
+- **Migration**: Automated asset migration utility:
+  ```bash
+  npm run media:migrate --workspace=@jerai/api
+  ```
 
-*(For automated testing and CI pipelines only, non-interactive mode is also supported by supplying `ADMIN_EMAIL` and `ADMIN_PASSWORD` via environment variables).*
+### 4. Workout Sessions & Progress Tracking (Phase 6)
+- **Live Session Engine**: Start workouts, pause/resume timers, track active elapsed time, and record exertion (RPE 1–10) and notes.
+- **Progress Dashboard**: View completion statistics, active weekly streaks, total minutes trained, and detailed session history at `/progress`.
 
-The bootstrap script:
-- Refuses to prompt or overwrite if an administrator already exists in the database.
-- Validates the email and password format using strict Zod schemas.
-- Refuses unexpected overwrite if the email is already in use by a `MEMBER`.
-- Hashes credentials with Argon2id and inserts an `ADMIN` user.
-- Never prints the password or session tokens to logs, traces, or stdout.
+### 5. Active Session Protection (Phase 7b)
+- **Loss Prevention**: Warns users if they attempt to close an active workout modal, requiring explicit confirmation to avoid accidental session abandonment.
+- **Dirty State Recovery**: Uncompleted session data is safely managed to ensure accurate progress metrics.
+
+### 6. Edge Reverse Proxy & Rate Limiting (Phase 7c)
+- **Cloudflare Pages Proxy**: `functions/api/[[catchall]].ts` provides edge routing to the backend API without exposing internal hostnames or CORS complexities.
+- **Proxy Authentication**: Enforces `x-proxy-secret` header checks on the backend API to block direct perimeter bypass.
+- **Anti-Spoofing Rate Limits**: Resolves client IP addresses securely using express proxy trust settings.
 
 ---
 
 ## Testing & Quality Verification
 
-Run automated checks across all workspaces from the monorepo root:
+Run all automated verification checks across the monorepo from the root directory:
 
 ```bash
-# Run all automated tests (106 tests across shared, web, and api)
+# Run all 212 automated unit and integration tests
 npm test
 
 # Run ESLint across all packages
 npm run lint
 
-# Run TypeScript typechecks across all packages
+# Run TypeScript typechecks across shared, api, and web
 npm run typecheck
 
-# Build production bundles for web and api
+# Build production bundles for frontend and API
 npm run build
+
+# Run Playwright end-to-end tests (requires running backend/DB)
+npm run test:e2e
 ```
 
-### Test Coverage Summary:
-- **`packages/shared`** (26 tests): Workout validation schemas, auth schemas (register, login, email normalization, password constraints).
-- **`apps/web`** (49 tests): Unit and integration tests for filtering, modals, timers, theme, TanStack Query states, storage error resilience, `AuthContext` state restore, `ProtectedRoute` RBAC guards, and Login/Register UI flows.
-- **`apps/api`** (31 tests): Supertest endpoint verification for health, listings, filters, safe error handling, Argon2id registration, login rate limiting, session rotation, HttpOnly cookies, CSRF protection, admin bootstrap, and server-enforced RBAC (401 anonymous, 403 member, 201/200 admin).
+### Test Suite Breakdown (212 Tests Passing):
+- **`packages/shared`** (26 tests): Zod validation schemas for workouts, sessions, authentication, and media.
+- **`apps/web`** (71 tests): Frontend unit and integration tests for catalog filters, modals, focus timers, theme switching, React Query synchronization, session exit confirmation, and the `ProgressDashboard`.
+- **`apps/api`** (115 tests): Backend endpoint verification covering health, workout CRUD, Argon2id auth, rate limiting, session rotation, proxy secret authentication, object storage drivers, media validation, and session tracking.
+
+---
+
+## Safe Production Deployment Next Steps
+
+1. **Database Deployment**:
+   - Provision a PostgreSQL database (e.g. Neon Serverless).
+   - Set `DATABASE_URL` (pooled) and `DIRECT_URL` (direct).
+   - Apply migrations: `npx prisma migrate deploy --workspace=@jerai/api`.
+   - Seed default catalog: `npm run prisma:seed --workspace=@jerai/api`.
+   - Bootstrap admin user: `npm run admin:bootstrap --workspace=@jerai/api`.
+
+2. **Backend API Deployment (Render / Railway)**:
+   - Configure environment variables: `NODE_ENV=production`, `PORT=3000`, `DATABASE_URL`, `DIRECT_URL`, `CORS_ORIGIN`, `PROXY_SECRET`, `REQUIRE_PROXY_AUTH=true`, `TRUST_PROXY=1`.
+   - Start script: `npm run start --workspace=@jerai/api` (runs compiled `node dist/server.js`).
+
+3. **Frontend Deployment (Cloudflare Pages)**:
+   - Build output directory: `apps/web/dist`.
+   - Build command: `npm run build:web`.
+   - Set Cloudflare Pages environment variables: `BACKEND_API_URL` (your live API URL) and `PROXY_SECRET` (matching the backend secret).
