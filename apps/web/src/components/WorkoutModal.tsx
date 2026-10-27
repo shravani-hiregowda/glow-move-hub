@@ -70,7 +70,7 @@ function InnerWorkoutModal({ workout, onClose }: WorkoutModalProps) {
       setSessionStartTime(null);
       setShowAbandonConfirm(false);
     }
-  }, [workout]);
+  }, [workout?.id]);
 
   // Query active server session if authenticated
   const { data: serverActiveSession } = useQuery({

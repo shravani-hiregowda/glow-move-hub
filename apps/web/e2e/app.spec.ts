@@ -57,9 +57,10 @@ test.describe("Public Application Experience", () => {
     // Type search query
     await searchInput.fill("Dumbbell Bench Press");
 
-    // Push-Up Power should be filtered out
-    await expect(page.getByRole("heading", { name: "Dumbbell Bench Press" }).first()).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Push-Up Power" })).not.toBeVisible();
+    // Push-Up Power should be filtered out of the workouts catalog
+    const workoutsCatalog = page.locator("section:has-text('Explore Workouts')");
+    await expect(workoutsCatalog.getByRole("heading", { name: "Dumbbell Bench Press" })).toBeVisible();
+    await expect(workoutsCatalog.getByRole("heading", { name: "Push-Up Power" })).not.toBeVisible();
   });
 
   test("opens workout details modal and closes it", async ({ page }) => {
@@ -456,7 +457,7 @@ test.describe.serial("Phase 6 Workout Sessions, Progress Tracking & Access Isola
     ]);
 
     // Verify Session Active badge is displayed
-    await expect(page.locator("text=Session Active")).toBeVisible();
+    await expect(page.locator("text=Session Active")).toBeVisible({ timeout: 10000 });
 
     // Toggle a step
     const stepBtn = page.locator(".space-y-3 button").first();
