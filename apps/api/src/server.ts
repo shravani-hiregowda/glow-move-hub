@@ -1,10 +1,43 @@
 import { app } from "./app";
 import { env } from "./config/env";
-import { disconnectDatabase } from "./db/client";
+import { disconnectDatabase, prisma } from "./db/client";
+import { hashPassword } from "./utils/password";
+
+async function initAdminAccount() {
+  try {
+    const adminEmail = (process.env.ADMIN_EMAIL || "shravani.hiregowda9@jeraifit.com").trim().toLowerCase();
+    const adminPassword = process.env.ADMIN_PASSWORD || "Shravani@789";
+
+    const existing = await prisma.user.findUnique({
+      where: { email: adminEmail },
+    });
+
+    if (!existing) {
+      const passwordHash = await hashPassword(adminPassword);
+      await prisma.user.create({
+        data: {
+          email: adminEmail,
+          passwordHash,
+          role: "ADMIN",
+        },
+      });
+      console.log(`[JERAI FIT API] Administrator account provisioned: ${adminEmail}`);
+    } else if (existing.role !== "ADMIN") {
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: { role: "ADMIN" },
+      });
+      console.log(`[JERAI FIT API] Existing account ${adminEmail} promoted to ADMIN`);
+    }
+  } catch (err) {
+    console.error("[JERAI FIT API] Note: Admin initialization skipped or deferred:", err);
+  }
+}
 
 const server = app.listen(env.PORT, "0.0.0.0", () => {
   console.log(`[JERAI FIT API] Server running on port ${env.PORT} on 0.0.0.0 in ${env.NODE_ENV} mode`);
   console.log("[JERAI FIT API] Security: Session-based Auth & RBAC active");
+  void initAdminAccount();
 });
 
 async function handleShutdown(signal: string) {
