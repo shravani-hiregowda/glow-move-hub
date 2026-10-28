@@ -142,6 +142,8 @@ export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigat
             <button
               className="md:hidden w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground"
               onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+              title="Navigation Menu"
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>

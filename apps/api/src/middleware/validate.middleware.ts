@@ -21,13 +21,15 @@ export function validateRequest(schemas: ValidationSchemas) {
       }
       next();
     } catch (err: unknown) {
-      if (err instanceof ZodError) {
+      const isZod = err instanceof ZodError || (err && typeof err === "object" && (err as { name?: string }).name === "ZodError");
+      if (isZod) {
+        const zodErr = err as ZodError;
         res.status(400).json({
           success: false,
           error: {
             code: "VALIDATION_ERROR",
             message: "Request validation failed",
-            details: err.issues.map((i) => ({
+            details: (zodErr.issues || []).map((i) => ({
               path: i.path.join("."),
               message: i.message,
             })),

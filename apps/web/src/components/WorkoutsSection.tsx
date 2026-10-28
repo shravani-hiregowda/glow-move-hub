@@ -73,6 +73,8 @@ export default function WorkoutsSection({
           </div>
           <motion.button
             onClick={() => setShowFilters(!showFilters)}
+            aria-label="Toggle workout filters"
+            title="Filters"
             className={`px-4 py-3 rounded-2xl border transition-all flex items-center gap-2 ${
               showFilters ? "bg-primary/10 border-primary/30 text-primary" : "bg-secondary border-border text-foreground"
             }`}

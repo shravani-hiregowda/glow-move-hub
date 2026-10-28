@@ -12,35 +12,35 @@
     --card-foreground: 220 25% 10%;
     --popover: 0 0% 100%;
     --popover-foreground: 220 25% 10%;
-    --primary: 145 80% 42%;
-    --primary-foreground: 220 25% 5%;
+    --primary: 145 80% 32%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 220 15% 92%;
     --secondary-foreground: 220 25% 15%;
     --muted: 220 15% 94%;
-    --muted-foreground: 220 10% 50%;
-    --accent: 195 90% 50%;
-    --accent-foreground: 220 25% 5%;
-    --destructive: 0 84% 60%;
+    --muted-foreground: 220 12% 40%;
+    --accent: 195 90% 40%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 15% 88%;
-    --input: 220 15% 88%;
-    --ring: 145 80% 42%;
+    --border: 220 15% 85%;
+    --input: 220 15% 85%;
+    --ring: 145 80% 32%;
     --radius: 1rem;
 
-    --neon: 145 80% 42%;
-    --neon-glow: 145 90% 55%;
-    --cyan: 195 90% 50%;
+    --neon: 145 80% 35%;
+    --neon-glow: 145 90% 45%;
+    --cyan: 195 90% 40%;
     --surface-glass: 0 0% 100% / 0.7;
     --surface-glass-border: 0 0% 100% / 0.3;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 25% 10%;
-    --sidebar-primary: 145 80% 42%;
-    --sidebar-primary-foreground: 220 25% 5%;
+    --sidebar-primary: 145 80% 32%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 15% 94%;
     --sidebar-accent-foreground: 220 25% 10%;
-    --sidebar-border: 220 15% 88%;
-    --sidebar-ring: 145 80% 42%;
+    --sidebar-border: 220 15% 85%;
+    --sidebar-ring: 145 80% 32%;
   }
 
   .dark {
@@ -50,19 +50,19 @@
     --card-foreground: 210 20% 92%;
     --popover: 225 20% 10%;
     --popover-foreground: 210 20% 92%;
-    --primary: 145 80% 42%;
+    --primary: 145 80% 45%;
     --primary-foreground: 220 25% 5%;
     --secondary: 225 18% 15%;
     --secondary-foreground: 210 20% 90%;
     --muted: 225 18% 14%;
-    --muted-foreground: 220 10% 55%;
+    --muted-foreground: 220 10% 65%;
     --accent: 195 90% 50%;
     --accent-foreground: 220 25% 5%;
     --destructive: 0 62% 30%;
     --destructive-foreground: 210 20% 92%;
     --border: 225 15% 18%;
     --input: 225 15% 18%;
-    --ring: 145 80% 42%;
+    --ring: 145 80% 45%;
 
     --surface-glass: 225 25% 10% / 0.6;
     --surface-glass-border: 225 15% 25% / 0.4;
