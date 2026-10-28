@@ -120,14 +120,6 @@ export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigat
                     </span>
                   </div>
                 </button>
-
-                <motion.button
-                  onClick={() => logout()}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-secondary hover:bg-secondary/80 text-xs font-semibold text-foreground transition-all"
-                  title={`Signed in as ${user.name || user.email} (${user.email})`}
-                >
-                  <LogOut className="w-3.5 h-3.5 text-muted-foreground" /> Sign Out
-                </motion.button>
               </div>
             ) : (
               <div className="hidden sm:flex items-center gap-2">

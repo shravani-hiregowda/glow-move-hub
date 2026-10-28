@@ -3,7 +3,6 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
-  User,
   Shield,
   ShieldCheck,
   Check,
@@ -23,7 +22,6 @@ interface ProfileModalProps {
 
 export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const { user, updateProfile, switchRole, logout, login } = useAuth();
-  const [name, setName] = useState(user?.name || "");
   const [targetWeight, setTargetWeight] = useState(user?.targetWeight ? String(user.targetWeight) : "");
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSwitchingRole, setIsSwitchingRole] = useState(false);
@@ -36,7 +34,6 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
   useEffect(() => {
     if (user) {
-      setName(user.name || "");
       setTargetWeight(user.targetWeight ? String(user.targetWeight) : "");
     }
   }, [user, isOpen]);
@@ -55,23 +52,18 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
   if (!isOpen || !user || !mounted) return null;
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
+  const handleSaveGoal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
-      toast.error("Name cannot be empty.");
-      return;
-    }
-
     setIsUpdating(true);
     try {
       const parsedWeight = targetWeight.trim() ? parseFloat(targetWeight) : null;
       await updateProfile({
-        name: name.trim(),
+        name: user.name || user.email.split("@")[0],
         targetWeight: parsedWeight && !isNaN(parsedWeight) ? parsedWeight : null,
       });
-      toast.success("Profile updated successfully!");
+      toast.success("Target weight updated successfully!");
     } catch (err: unknown) {
-      toast.error((err as Error)?.message || "Failed to update profile.");
+      toast.error((err as Error)?.message || "Failed to update target weight.");
     } finally {
       setIsUpdating(false);
     }
@@ -214,28 +206,22 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               </p>
             </div>
 
-            {/* Edit Profile Form */}
-            <form onSubmit={handleSaveProfile} className="space-y-4">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <User className="w-4 h-4 text-primary" /> Profile Details
-              </h3>
-
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Kiran"
-                  className="w-full px-4 py-2.5 rounded-xl bg-secondary/40 border border-border text-foreground text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
+            {/* Target Weight Goal Setting Form (Name already collected at registration) */}
+            <form onSubmit={handleSaveGoal} className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Target className="w-4 h-4 text-primary" /> Fitness Goal (Target Weight)
+                </h3>
+                {user.targetWeight && (
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Current Goal: <span className="text-primary font-bold">{user.targetWeight} kg</span>
+                  </span>
+                )}
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  Target Weight (kg)
+                  Target Goal (kg)
                 </label>
                 <div className="relative">
                   <Target className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -250,20 +236,23 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                     className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-secondary/40 border border-border text-foreground text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
                   />
                 </div>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Powers the reference goal line on the Weight Tracker chart in your Progress tab.
+                </p>
               </div>
 
               <button
                 type="submit"
                 disabled={isUpdating}
-                className="w-full py-2.5 px-4 rounded-xl gradient-primary text-primary-foreground font-semibold text-xs flex items-center justify-center gap-2 neon-glow hover:opacity-90 transition-all disabled:opacity-50"
+                className="w-full py-2.5 px-4 rounded-xl gradient-primary text-primary-foreground font-semibold text-xs flex items-center justify-center gap-2 neon-glow hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer"
               >
                 {isUpdating ? (
                   <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Saving...
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Updating Goal...
                   </>
                 ) : (
                   <>
-                    <Save className="w-3.5 h-3.5" /> Save Profile Details
+                    <Save className="w-3.5 h-3.5" /> Save Target Goal
                   </>
                 )}
               </button>
@@ -321,14 +310,14 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             </div>
           </div>
 
-          {/* Sticky Modal Footer with Explicit Dismiss and Sign Out Buttons */}
+          {/* Sticky Modal Footer with Sign Out and Close Buttons */}
           <div className="p-4 px-6 bg-secondary/30 border-t border-border flex items-center justify-between shrink-0">
             <button
               onClick={() => {
                 logout();
                 onClose();
               }}
-              className="text-xs text-destructive hover:underline flex items-center gap-1.5 font-medium"
+              className="text-xs text-destructive hover:underline flex items-center gap-1.5 font-medium cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" /> Sign Out
             </button>
