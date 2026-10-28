@@ -176,11 +176,22 @@ export const api = {
   },
 
   async updateProfile(input: UpdateProfileInput): Promise<UserDto> {
-    const res = await request<{ data: { user: UserDto } }>("/auth/profile", {
-      method: "PATCH",
-      body: JSON.stringify(input),
-    });
-    return res.data.user;
+    try {
+      const res = await request<{ data: { user: UserDto } }>("/auth/profile", {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      });
+      return res.data.user;
+    } catch (err: unknown) {
+      if ((err as Error)?.message?.includes("not found")) {
+        const res = await request<{ data: { user: UserDto } }>("/auth/profile", {
+          method: "POST",
+          body: JSON.stringify(input),
+        });
+        return res.data.user;
+      }
+      throw err;
+    }
   },
 
   async switchRole(role: "MEMBER" | "ADMIN"): Promise<UserDto> {
