@@ -5,12 +5,10 @@ import {
   X,
   Shield,
   ShieldCheck,
-  Check,
   Save,
   Target,
   RefreshCw,
   LogOut,
-  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -21,11 +19,10 @@ interface ProfileModalProps {
 }
 
 export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
-  const { user, updateProfile, switchRole, logout, login } = useAuth();
+  const { user, updateProfile, switchRole, logout } = useAuth();
   const [targetWeight, setTargetWeight] = useState(user?.targetWeight ? String(user.targetWeight) : "");
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSwitchingRole, setIsSwitchingRole] = useState(false);
-  const [isSwitchingUser, setIsSwitchingUser] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -79,19 +76,6 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
       toast.error((err as Error)?.message || "Failed to switch role.");
     } finally {
       setIsSwitchingRole(false);
-    }
-  };
-
-  const handleQuickDemoSwitch = async (email: string, pass: string, demoName: string) => {
-    setIsSwitchingUser(true);
-    try {
-      await login(email, pass);
-      toast.success(`Logged in as ${demoName}!`);
-      onClose();
-    } catch {
-      toast.error(`Unable to switch to ${demoName}.`);
-    } finally {
-      setIsSwitchingUser(false);
     }
   };
 
@@ -188,7 +172,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                   disabled={isSwitchingRole}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer ${
                     user.role === "ADMIN"
                       ? "bg-secondary text-foreground hover:bg-secondary/80 border border-border"
                       : "gradient-primary text-primary-foreground neon-glow"
@@ -257,57 +241,6 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                 )}
               </button>
             </form>
-
-            {/* Demo User Quick Switcher */}
-            <div className="pt-2">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-primary" /> Quick Demo Switcher
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleQuickDemoSwitch("kiran@jeraifit.com", "Kiran@123", "Kiran (MEMBER)")}
-                  disabled={isSwitchingUser}
-                  className={`p-2.5 rounded-xl border text-left transition-all ${
-                    user.email === "kiran@jeraifit.com"
-                      ? "bg-primary/10 border-primary/40 text-primary font-semibold"
-                      : "bg-secondary/40 border-border hover:bg-secondary text-foreground text-xs"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs">Kiran</span>
-                    {user.email === "kiran@jeraifit.com" && <Check className="w-3 h-3" />}
-                  </div>
-                  <span className="text-[10px] text-muted-foreground block">MEMBER (Progress Demo)</span>
-                </button>
-
-                <button
-                  onClick={() =>
-                    handleQuickDemoSwitch(
-                      "shravani.hiregowda9@jeraifit.com",
-                      "Shravani@789",
-                      "Shravani (ADMIN)"
-                    )
-                  }
-                  disabled={isSwitchingUser}
-                  className={`p-2.5 rounded-xl border text-left transition-all ${
-                    user.email === "shravani.hiregowda9@jeraifit.com"
-                      ? "bg-amber-500/10 border-amber-500/40 text-amber-400 font-semibold"
-                      : "bg-secondary/40 border-border hover:bg-secondary text-foreground text-xs"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs">Shravani</span>
-                    {user.email === "shravani.hiregowda9@jeraifit.com" && (
-                      <Check className="w-3 h-3 text-amber-400" />
-                    )}
-                  </div>
-                  <span className="text-[10px] text-muted-foreground block">ADMIN (Workout Portal)</span>
-                </button>
-              </div>
-            </div>
           </div>
 
           {/* Sticky Modal Footer with Sign Out and Close Buttons */}
