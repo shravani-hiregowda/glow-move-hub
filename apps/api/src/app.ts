@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { env } from "./config/env";
+import { isAllowedOrigin } from "./utils/origin";
 import { proxyAuthGuard } from "./middleware/proxyAuth.middleware";
 import { authenticateSession } from "./middleware/auth.middleware";
 import { csrfProtection } from "./middleware/csrf.middleware";
@@ -25,19 +26,10 @@ export function createApp() {
   app.use(proxyAuthGuard);
 
   // Narrow, credentialed CORS configuration
-  const allowedOrigins = [
-    env.CORS_ORIGIN,
-    "http://localhost:8080",
-    "http://localhost:5173",
-    "http://127.0.0.1:8080",
-    "http://127.0.0.1:5173",
-  ];
-
   app.use(
     cors({
       origin: (origin, callback) => {
-        // Allow requests with no origin (e.g. server-to-server, curl, same-origin supertest)
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (isAllowedOrigin(origin)) {
           callback(null, true);
         } else {
           callback(new Error("Not allowed by CORS"));

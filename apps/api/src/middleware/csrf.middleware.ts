@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { Request, Response, NextFunction } from "express";
-import { env } from "../config/env";
+import { isAllowedOrigin } from "../utils/origin";
 import { SESSION_COOKIE_NAME, CSRF_COOKIE_NAME } from "../utils/session";
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -10,14 +10,6 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
   if (SAFE_METHODS.has(req.method)) {
     return next();
   }
-
-  const allowedOrigins = [
-    env.CORS_ORIGIN,
-    "http://localhost:8080",
-    "http://localhost:5173",
-    "http://127.0.0.1:8080",
-    "http://127.0.0.1:5173",
-  ];
 
   // 1. Strict Origin / Referer validation for state-changing requests
   const originHeader = req.headers.origin;
@@ -37,15 +29,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
 
   // If an Origin or Referer is supplied, verify it strictly matches allowed origins
   if (requestOrigin) {
-    const isAllowed = allowedOrigins.some((allowed) => {
-      try {
-        return new URL(allowed).origin === requestOrigin;
-      } catch {
-        return allowed === requestOrigin;
-      }
-    });
-
-    if (!isAllowed) {
+    if (!isAllowedOrigin(requestOrigin)) {
       res.status(403).json({
         success: false,
         error: {
