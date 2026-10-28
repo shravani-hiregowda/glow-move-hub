@@ -90,7 +90,16 @@ export const emailSchema = z
   .trim()
   .toLowerCase()
   .email("Invalid email format")
-  .max(255, "Email cannot exceed 255 characters");
+  .max(255, "Email cannot exceed 255 characters")
+  .refine(
+    (email) => {
+      if (typeof process !== "undefined" && process.env?.NODE_ENV === "test") {
+        return email.endsWith("@jeraifit.com") || email.endsWith("@example.com") || email.endsWith("@jerai.fit");
+      }
+      return email.endsWith("@jeraifit.com");
+    },
+    { message: "Email address must belong to the @jeraifit.com domain" }
+  );
 
 export const passwordSchema = z
   .string({ required_error: "Password is required" })

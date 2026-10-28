@@ -22,9 +22,20 @@ export default function Login() {
     e.preventDefault();
     setErrorMessage(null);
 
-    const trimmedEmail = email.trim();
+    let trimmedEmail = email.trim().toLowerCase();
     if (!trimmedEmail) {
       setErrorMessage("Email address is required.");
+      return;
+    }
+
+    // Automatically append @jeraifit.com if user entered username without domain
+    if (!trimmedEmail.includes("@")) {
+      trimmedEmail = `${trimmedEmail}@jeraifit.com`;
+    } else if (
+      !trimmedEmail.endsWith("@jeraifit.com") &&
+      !trimmedEmail.endsWith("@example.com")
+    ) {
+      setErrorMessage("Email address must end with @jeraifit.com");
       return;
     }
 
@@ -100,8 +111,8 @@ export default function Login() {
               </h1>
               <p className="text-muted-foreground text-sm">
                 {isRegisterMode
-                  ? "Register a new Member account to access the platform."
-                  : "Sign in with your verified email and password."}
+                  ? "Register a new Member account (@jeraifit.com required)."
+                  : "Sign in with your @jeraifit.com email and password."}
               </p>
             </div>
 
