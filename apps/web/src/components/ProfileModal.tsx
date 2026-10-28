@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -27,6 +28,11 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSwitchingRole, setIsSwitchingRole] = useState(false);
   const [isSwitchingUser, setIsSwitchingUser] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -47,7 +53,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen || !user) return null;
+  if (!isOpen || !user || !mounted) return null;
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,27 +105,37 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
   const initials = ((user.name || user.email)[0] || "U").toUpperCase();
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto"
-        onClick={onClose}
+        className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
         role="dialog"
         aria-modal="true"
         aria-labelledby="profile-dialog-title"
       >
+        {/* Full-screen backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 bg-black/75 backdrop-blur-md cursor-pointer"
+          aria-hidden="true"
+        />
+
+        {/* Modal Card */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-lg my-auto rounded-3xl bg-card border border-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative z-10 w-full max-w-lg my-auto rounded-3xl bg-card border border-border shadow-2xl flex flex-col max-h-[85vh] overflow-hidden"
         >
           {/* Header Glow */}
-          <div className="absolute top-0 left-0 right-0 h-1 gradient-primary opacity-60 z-10" />
+          <div className="absolute top-0 left-0 right-0 h-1.5 gradient-primary opacity-80 z-20" />
 
-          {/* Sticky Header with Close button */}
-          <div className="relative p-5 sm:p-6 pb-4 border-b border-border flex items-center justify-between shrink-0 bg-card">
+          {/* Sticky Modal Header */}
+          <div className="relative p-5 sm:p-6 pb-4 border-b border-border flex items-center justify-between shrink-0 bg-card z-10">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center text-xl font-bold text-primary-foreground shadow-lg shrink-0">
                 {initials}
@@ -147,13 +163,13 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               onClick={onClose}
               id="close-profile-modal-btn"
               aria-label="Close Profile Dialog"
-              className="p-2 rounded-xl bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+              className="p-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Scrollable Content Body */}
+          {/* Scrollable Modal Content */}
           <div className="p-5 sm:p-6 overflow-y-auto space-y-6">
             {/* Role Switching Demonstration Banner */}
             <div className="p-4 rounded-2xl bg-secondary/50 border border-border space-y-3">
@@ -169,7 +185,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                       Role & Access Control (RBAC)
                     </h4>
                     <p className="text-xs text-muted-foreground">
-                      Current active permissions:{" "}
+                      Active permissions:{" "}
                       <span className="font-semibold text-foreground">{user.role}</span>
                     </p>
                   </div>
@@ -321,7 +337,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               type="button"
               onClick={onClose}
               id="dismiss-profile-modal-btn"
-              className="px-4 py-2 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-xs font-semibold transition-all border border-border cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-xs font-bold transition-all border border-border cursor-pointer shadow-sm hover:scale-[1.02] active:scale-[0.98]"
             >
               Close
             </button>
@@ -330,4 +346,6 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
       </div>
     </AnimatePresence>
   );
+
+  return typeof document !== "undefined" ? createPortal(modalContent, document.body) : modalContent;
 }
