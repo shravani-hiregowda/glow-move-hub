@@ -35,6 +35,12 @@ export default function WorkoutCard({ workout, index, onClick }: WorkoutCardProp
           loading="lazy"
           width={640}
           height={480}
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (target.src !== `${window.location.origin}/placeholder.svg`) {
+              target.src = "/placeholder.svg";
+            }
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-80" />
         <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-300" />

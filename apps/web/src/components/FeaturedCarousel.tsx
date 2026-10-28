@@ -39,7 +39,20 @@ export default function FeaturedCarousel({ workouts, onSelect }: FeaturedCarouse
             whileHover={{ scale: 1.02 }}
           >
             <div className="aspect-[16/10] relative">
-              <img src={w.image} alt={w.title} className="w-full h-full object-cover" loading="lazy" width={640} height={400} />
+              <img
+                src={w.image}
+                alt={w.title}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                width={640}
+                height={400}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== `${window.location.origin}/placeholder.svg`) {
+                    target.src = "/placeholder.svg";
+                  }
+                }}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
               <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors" />
               <div className="absolute bottom-4 left-4 right-4">
