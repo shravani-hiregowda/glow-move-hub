@@ -19,10 +19,9 @@ interface ProfileModalProps {
 }
 
 export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
-  const { user, updateProfile, switchRole, logout } = useAuth();
+  const { user, updateProfile, logout } = useAuth();
   const [targetWeight, setTargetWeight] = useState(user?.targetWeight ? String(user.targetWeight) : "");
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isSwitchingRole, setIsSwitchingRole] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -63,19 +62,6 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
       toast.error((err as Error)?.message || "Failed to update target weight.");
     } finally {
       setIsUpdating(false);
-    }
-  };
-
-  const handleRoleToggle = async () => {
-    const nextRole = user.role === "ADMIN" ? "MEMBER" : "ADMIN";
-    setIsSwitchingRole(true);
-    try {
-      await switchRole(nextRole);
-      toast.success(`Role switched to ${nextRole}! UI permissions updated.`);
-    } catch (err: unknown) {
-      toast.error((err as Error)?.message || "Failed to switch role.");
-    } finally {
-      setIsSwitchingRole(false);
     }
   };
 
@@ -147,50 +133,28 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
           {/* Scrollable Modal Content */}
           <div className="p-5 sm:p-6 overflow-y-auto space-y-6">
-            {/* Role Switching Demonstration Banner */}
-            <div className="p-4 rounded-2xl bg-secondary/50 border border-border space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {user.role === "ADMIN" ? (
-                    <ShieldCheck className="w-5 h-5 text-amber-400" />
-                  ) : (
-                    <Shield className="w-5 h-5 text-primary" />
-                  )}
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                      Role & Access Control (RBAC)
-                    </h4>
-                    <p className="text-xs text-muted-foreground">
-                      Active permissions:{" "}
-                      <span className="font-semibold text-foreground">{user.role}</span>
-                    </p>
-                  </div>
+            {/* Account Role & Privileges Status Card */}
+            <div className="p-4 rounded-2xl bg-secondary/50 border border-border space-y-2">
+              <div className="flex items-center gap-2.5">
+                {user.role === "ADMIN" ? (
+                  <ShieldCheck className="w-5 h-5 text-amber-400 shrink-0" />
+                ) : (
+                  <Shield className="w-5 h-5 text-primary shrink-0" />
+                )}
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                    {user.role === "ADMIN" ? "Administrator Access" : "Member Account"}
+                  </h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                    {user.role === "ADMIN"
+                      ? "Full administrative permissions to manage workout catalog, upload exercise media, and configure settings."
+                      : "Standard membership access to workouts, personal workout history, and progress tracking."}
+                  </p>
                 </div>
-
-                <motion.button
-                  onClick={handleRoleToggle}
-                  disabled={isSwitchingRole}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer ${
-                    user.role === "ADMIN"
-                      ? "bg-secondary text-foreground hover:bg-secondary/80 border border-border"
-                      : "gradient-primary text-primary-foreground neon-glow"
-                  }`}
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isSwitchingRole ? "animate-spin" : ""}`} />
-                  {user.role === "ADMIN" ? "Switch to MEMBER" : "Switch to ADMIN"}
-                </motion.button>
               </div>
-
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                {user.role === "ADMIN"
-                  ? "ADMIN Mode: Access to Workout Catalog Management, Workout Creation, Deletion, and Media Migration."
-                  : "MEMBER Mode: Personal Workout Sessions, Progress Tracking, Weight Tracker, and Streaks."}
-              </p>
             </div>
 
-            {/* Target Weight Goal Setting Form (Name already collected at registration) */}
+            {/* Target Weight Goal Setting Form */}
             <form onSubmit={handleSaveGoal} className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
