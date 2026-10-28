@@ -270,8 +270,10 @@ npm run test:e2e
    - Bootstrap admin user: `npm run admin:bootstrap --workspace=@jerai/api`.
 
 2. **Backend API Deployment (Render / Railway)**:
-   - Configure environment variables: `NODE_ENV=production`, `PORT=3000`, `DATABASE_URL`, `DIRECT_URL`, `CORS_ORIGIN`, `PROXY_SECRET`, `REQUIRE_PROXY_AUTH=true`, `TRUST_PROXY=1`.
-   - Start script: `npm run start --workspace=@jerai/api` (runs compiled `node dist/server.js`).
+   - Root Directory: `.` (leave blank / root)
+   - Build Command: `npm run build:api` (or `npm install --include=dev && npm run build:api`)
+   - Start Command: `npm run start:api` (or `npm run start --workspace=@jerai/api`)
+   - Configure environment variables: `NODE_ENV=production`, `NPM_CONFIG_PRODUCTION=false`, `PORT=3000`, `DATABASE_URL`, `DIRECT_URL`, `CORS_ORIGIN`, `PROXY_SECRET`, `REQUIRE_PROXY_AUTH=true`, `TRUST_PROXY=1`.
 
 3. **Frontend Deployment (Cloudflare Pages)**:
    - Build output directory: `apps/web/dist`.

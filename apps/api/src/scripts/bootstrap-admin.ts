@@ -128,12 +128,14 @@ export async function bootstrapAdmin(options?: { email?: string; password?: stri
   if (!emailParsed.success) {
     console.error(`\n[Admin Bootstrap Error] Invalid ADMIN_EMAIL: ${emailParsed.error.issues[0]?.message}`);
     process.exit(1);
+    return;
   }
 
   const passwordParsed = passwordSchema.safeParse(rawPassword);
   if (!passwordParsed.success) {
     console.error(`\n[Admin Bootstrap Error] Invalid ADMIN_PASSWORD: ${passwordParsed.error.issues[0]?.message}`);
     process.exit(1);
+    return;
   }
 
   const normalizedEmail = emailParsed.data;
