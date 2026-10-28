@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Moon, Sun, Dumbbell, Menu, X, LogIn, LogOut } from "lucide-react";
+import { Moon, Sun, Dumbbell, Menu, X, LogIn, LogOut, UserPlus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthContext } from "@/contexts/AuthContext";
 
@@ -121,13 +121,22 @@ export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigat
                 </motion.button>
               </div>
             ) : (
-              <motion.button
-                onClick={() => navigate("/login")}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl gradient-primary text-primary-foreground neon-glow text-xs font-semibold transition-all"
-                title="Sign In"
-              >
-                <LogIn className="w-3.5 h-3.5" /> Sign In
-              </motion.button>
+              <div className="hidden sm:flex items-center gap-2">
+                <motion.button
+                  onClick={() => navigate("/register")}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-xs font-semibold transition-all"
+                  title="Create Member Account"
+                >
+                  <UserPlus className="w-3.5 h-3.5 text-primary" /> Sign Up
+                </motion.button>
+                <motion.button
+                  onClick={() => navigate("/login")}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl gradient-primary text-primary-foreground neon-glow text-xs font-semibold transition-all"
+                  title="Sign In"
+                >
+                  <LogIn className="w-3.5 h-3.5" /> Sign In
+                </motion.button>
+              </div>
             )}
 
             <button
@@ -190,15 +199,26 @@ export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigat
                   <LogOut className="w-4 h-4" /> Sign Out
                 </button>
               ) : (
-                <button
-                  onClick={() => {
-                    navigate("/login");
-                    setMobileOpen(false);
-                  }}
-                  className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-primary hover:bg-primary/10 transition-all flex items-center gap-2"
-                >
-                  <LogIn className="w-4 h-4" /> Sign In
-                </button>
+                <div className="space-y-1">
+                  <button
+                    onClick={() => {
+                      navigate("/register");
+                      setMobileOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-foreground hover:bg-secondary transition-all flex items-center gap-2"
+                  >
+                    <UserPlus className="w-4 h-4 text-primary" /> Sign Up
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigate("/login");
+                      setMobileOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-primary hover:bg-primary/10 transition-all flex items-center gap-2"
+                  >
+                    <LogIn className="w-4 h-4" /> Sign In
+                  </button>
+                </div>
               )}
             </div>
           </motion.div>

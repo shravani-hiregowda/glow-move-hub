@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Lock, Mail, Key, ArrowRight, ShieldAlert, UserPlus, LogIn, Loader2, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,7 +8,17 @@ import { useTheme } from "@/hooks/useTheme";
 import { ApiError } from "@/lib/api-client";
 
 export default function Login() {
-  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const [isRegisterMode, setIsRegisterMode] = useState(
+    () => location.pathname === "/register" || searchParams.get("mode") === "register"
+  );
+
+  useEffect(() => {
+    if (location.pathname === "/register" || searchParams.get("mode") === "register") {
+      setIsRegisterMode(true);
+    }
+  }, [location.pathname, searchParams]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -115,7 +125,7 @@ export default function Login() {
             </div>
 
             <div className="text-center mb-6">
-              <h1 className="font-display text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 mb-2">
+              <h1 className="font-display text-3xl font-bold text-foreground mb-2">
                 {isRegisterMode ? "Create Account" : "Access Portal"}
               </h1>
               <p className="text-muted-foreground text-sm">
