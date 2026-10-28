@@ -19,10 +19,12 @@ model User {
   email        String    @unique @db.VarChar(255)
   passwordHash String    @map("password_hash") @db.VarChar(255)
   role         Role      @default(MEMBER)
+  targetWeight Float?    @map("target_weight")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
   sessions        Session[]
   workoutSessions WorkoutSession[]
+  weightLogs      WeightLog[]
 
   @@index([email])
   @@map("users")
@@ -137,4 +139,18 @@ model WorkoutSessionStep {
   @@unique([workoutSessionId, stepIndex])
   @@index([workoutSessionId])
   @@map("workout_session_steps")
+}
+
+model WeightLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  weight    Float
+  note      String?  @db.VarChar(255)
+  loggedAt  DateTime @default(now()) @map("logged_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([loggedAt])
+  @@map("weight_logs")
 }

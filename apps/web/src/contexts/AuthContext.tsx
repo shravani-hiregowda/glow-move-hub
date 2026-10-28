@@ -10,6 +10,8 @@ export interface AuthContextType {
   register: (email: string, password: string, name?: string) => Promise<UserDto>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateProfile: (input: { name?: string; targetWeight?: number | null }) => Promise<UserDto>;
+  switchRole: (role: "MEMBER" | "ADMIN") => Promise<UserDto>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,6 +51,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return res.user;
   };
 
+  const updateProfile = async (input: { name?: string; targetWeight?: number | null }): Promise<UserDto> => {
+    const updated = await api.updateProfile(input);
+    setUser(updated);
+    return updated;
+  };
+
+  const switchRole = async (role: "MEMBER" | "ADMIN"): Promise<UserDto> => {
+    const updated = await api.switchRole(role);
+    setUser(updated);
+    return updated;
+  };
+
   const logout = async (): Promise<void> => {
     try {
       await api.logout();
@@ -65,6 +79,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     register,
     logout,
     refreshUser,
+    updateProfile,
+    switchRole,
   };
 
   return (
@@ -77,7 +93,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    return {
+      isAuthenticated: false,
+      user: null,
+      isLoading: false,
+      login: async () => ({ id: "", email: "", role: "MEMBER" as const }),
+      register: async () => ({ id: "", email: "", role: "MEMBER" as const }),
+      logout: async () => {},
+      refreshUser: async () => {},
+      updateProfile: async () => ({ id: "", email: "", role: "MEMBER" as const }),
+      switchRole: async () => ({ id: "", email: "", role: "MEMBER" as const }),
+    };
   }
   return context;
 }

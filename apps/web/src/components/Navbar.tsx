@@ -1,8 +1,9 @@
 import { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Moon, Sun, Dumbbell, Menu, X, LogIn, LogOut, UserPlus } from "lucide-react";
+import { Moon, Sun, Dumbbell, Menu, X, LogIn, LogOut, UserPlus, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthContext } from "@/contexts/AuthContext";
+import ProfileModal from "@/components/ProfileModal";
 
 interface NavbarProps {
   isDark: boolean;
@@ -21,6 +22,7 @@ const navItems = [
 
 export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigate }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -98,7 +100,13 @@ export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigat
 
             {user ? (
               <div className="flex items-center gap-2">
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-secondary/80 border border-border" data-testid="user-profile-badge">
+                <button
+                  type="button"
+                  onClick={() => setIsProfileOpen(true)}
+                  className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-secondary/80 hover:bg-secondary border border-border transition-all cursor-pointer text-left"
+                  data-testid="user-profile-badge"
+                  title="Manage Profile & Role"
+                >
                   <div className="w-6 h-6 rounded-lg gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground uppercase shadow-sm">
                     {((user.name || user.email)[0] || "U").toUpperCase()}
                   </div>
@@ -110,7 +118,7 @@ export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigat
                       {user.role}
                     </span>
                   </div>
-                </div>
+                </button>
 
                 <motion.button
                   onClick={() => logout()}
@@ -191,15 +199,26 @@ export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigat
               ))}
 
               {user ? (
-                <button
-                  onClick={() => {
-                    logout();
-                    setMobileOpen(false);
-                  }}
-                  className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all flex items-center gap-2"
-                >
-                  <LogOut className="w-4 h-4" /> Sign Out
-                </button>
+                <div className="space-y-1">
+                  <button
+                    onClick={() => {
+                      setIsProfileOpen(true);
+                      setMobileOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-foreground hover:bg-secondary transition-all flex items-center gap-2"
+                  >
+                    <User className="w-4 h-4 text-primary" /> Profile & Role Settings
+                  </button>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMobileOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all flex items-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" /> Sign Out
+                  </button>
+                </div>
               ) : (
                 <div className="space-y-1">
                   <button
@@ -226,6 +245,8 @@ export default function Navbar({ isDark, onToggleTheme, activeSection, onNavigat
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </nav>
   );
 }

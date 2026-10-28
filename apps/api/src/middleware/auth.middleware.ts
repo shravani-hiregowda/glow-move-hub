@@ -16,6 +16,7 @@ declare global {
         name?: string | null;
         email: string;
         role: Role;
+        targetWeight?: number | null;
       };
       session?: {
         id: string;
@@ -57,6 +58,7 @@ export async function authenticateSession(
             name: true,
             email: true,
             role: true,
+            targetWeight: true,
           },
         },
       },

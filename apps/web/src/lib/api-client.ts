@@ -16,6 +16,10 @@ import type {
   UpdateWorkoutSessionProgressInput,
   CompleteWorkoutSessionInput,
   WorkoutSessionFilterQueryInput,
+  WeightLogDto,
+  CreateWeightLogInput,
+  UpdateProfileInput,
+  SwitchRoleInput,
 } from "@jerai/shared";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
@@ -171,6 +175,22 @@ export const api = {
     return res.data;
   },
 
+  async updateProfile(input: UpdateProfileInput): Promise<UserDto> {
+    const res = await request<{ data: { user: UserDto } }>("/auth/profile", {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    });
+    return res.data.user;
+  },
+
+  async switchRole(role: "MEMBER" | "ADMIN"): Promise<UserDto> {
+    const res = await request<{ data: { user: UserDto; message: string } }>("/auth/switch-role", {
+      method: "POST",
+      body: JSON.stringify({ role }),
+    });
+    return res.data.user;
+  },
+
   async logout(): Promise<void> {
     await request<{ success: boolean }>("/auth/logout", {
       method: "POST",
@@ -284,5 +304,25 @@ export const api = {
   async getSessionSummary(): Promise<WorkoutProgressSummaryDto> {
     const res = await request<{ data: WorkoutProgressSummaryDto }>("/sessions/summary");
     return res.data;
+  },
+
+  // Weight Tracker endpoints
+  async getWeightLogs(): Promise<WeightLogDto[]> {
+    const res = await request<{ data: WeightLogDto[] }>("/weight-logs");
+    return res.data || [];
+  },
+
+  async createWeightLog(input: CreateWeightLogInput): Promise<WeightLogDto> {
+    const res = await request<{ data: WeightLogDto }>("/weight-logs", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+    return res.data;
+  },
+
+  async deleteWeightLog(id: string): Promise<void> {
+    await request<{ success: boolean }>(`/weight-logs/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
   },
 };

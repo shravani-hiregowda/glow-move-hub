@@ -12,6 +12,7 @@ import authRoutes from "./routes/auth.routes";
 import workoutRoutes from "./routes/workout.routes";
 import mediaRoutes from "./routes/media.routes";
 import sessionRoutes from "./routes/session.routes";
+import weightRoutes from "./routes/weight.routes";
 
 export function createApp() {
   const app = express();
@@ -57,6 +58,7 @@ export function createApp() {
   app.use("/api/v1", workoutRoutes);
   app.use("/api/v1", mediaRoutes);
   app.use("/api/v1", sessionRoutes);
+  app.use("/api/v1", weightRoutes);
 
   // 404 handler for unmatched routes
   app.use((req: Request, res: Response) => {

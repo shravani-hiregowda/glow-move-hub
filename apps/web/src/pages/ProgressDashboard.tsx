@@ -21,6 +21,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useWorkoutContext } from "@/contexts/WorkoutContext";
 import Navbar from "@/components/Navbar";
 import WorkoutModal from "@/components/WorkoutModal";
+import WeightTracker from "@/components/WeightTracker";
+import StreakHeatmap from "@/components/StreakHeatmap";
 import type { Workout } from "@/data/workouts";
 import type { WorkoutSessionDto, WorkoutSessionStatus } from "@jerai/shared";
 
@@ -227,6 +229,16 @@ export default function ProgressDashboard() {
               </h2>
             </div>
           </motion.div>
+        </div>
+
+        {/* Streak & Consistency Heatmap */}
+        <div className="mb-10">
+          <StreakHeatmap sessions={sessions} />
+        </div>
+
+        {/* Live Weight Tracker */}
+        <div className="mb-10">
+          <WeightTracker isDark={isDark} />
         </div>
 
         {/* History Section */}

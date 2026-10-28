@@ -94,8 +94,25 @@ export interface UserDto {
   name?: string | null;
   email: string;
   role: Role;
+  targetWeight?: number | null;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface WeightLogDto {
+  id: string;
+  userId: string;
+  weight: number;
+  note?: string | null;
+  loggedAt: string;
+  createdAt: string;
+}
+
+export interface StreakSummaryDto {
+  currentStreakDays: number;
+  longestStreakDays: number;
+  totalActiveDays: number;
+  completionRateWeek: number;
 }
 
 export interface AuthResponse {

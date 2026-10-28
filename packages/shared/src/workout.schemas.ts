@@ -194,3 +194,22 @@ export type UpdateWorkoutSessionProgressInput = z.infer<typeof updateWorkoutSess
 export type CompleteWorkoutSessionInput = z.infer<typeof completeWorkoutSessionSchema>;
 export type WorkoutSessionFilterQueryInput = z.infer<typeof workoutSessionFilterQuerySchema>;
 export type SessionIdParamInput = z.infer<typeof sessionIdParamSchema>;
+
+export const createWeightLogSchema = z.object({
+  weight: z.number().min(20, "Weight must be at least 20 kg").max(500, "Weight must not exceed 500 kg"),
+  note: z.string().trim().max(255, "Note must not exceed 255 characters").optional(),
+  loggedAt: z.string().datetime().optional(),
+});
+
+export const updateProfileSchema = z.object({
+  name: nameSchema.optional(),
+  targetWeight: z.number().min(20).max(500).nullable().optional(),
+});
+
+export const switchRoleSchema = z.object({
+  role: z.enum(["MEMBER", "ADMIN"]),
+});
+
+export type CreateWeightLogInput = z.infer<typeof createWeightLogSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+export type SwitchRoleInput = z.infer<typeof switchRoleSchema>;

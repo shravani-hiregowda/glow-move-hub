@@ -239,10 +239,104 @@ export async function getMe(req: Request, res: Response): Promise<void> {
         name: req.user.name,
         email: req.user.email,
         role: req.user.role,
+        targetWeight: req.user.targetWeight,
       },
       csrfToken,
     },
   });
+}
+
+export async function updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Not authenticated.",
+        },
+      });
+      return;
+    }
+
+    const { name, targetWeight } = req.body;
+    const updateData: { name?: string; targetWeight?: number | null } = {};
+
+    if (typeof name === "string") {
+      updateData.name = name.trim();
+    }
+    if (targetWeight !== undefined) {
+      updateData.targetWeight = targetWeight === null ? null : Number(targetWeight);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: updateData,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user: {
+          id: updated.id,
+          name: updated.name,
+          email: updated.email,
+          role: updated.role,
+          targetWeight: updated.targetWeight,
+        },
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function switchRole(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Not authenticated.",
+        },
+      });
+      return;
+    }
+
+    const { role } = req.body;
+    if (role !== "MEMBER" && role !== "ADMIN") {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Role must be either MEMBER or ADMIN.",
+        },
+      });
+      return;
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { role },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user: {
+          id: updated.id,
+          name: updated.name,
+          email: updated.email,
+          role: updated.role,
+          targetWeight: updated.targetWeight,
+        },
+        message: `Role successfully switched to ${role}.`,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
 }
 
 export async function logout(req: Request, res: Response, next: NextFunction): Promise<void> {
