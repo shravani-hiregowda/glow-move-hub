@@ -17,6 +17,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/contexts/AuthContext";
 import { useWorkoutContext } from "@/contexts/WorkoutContext";
 import Navbar from "@/components/Navbar";
 import WorkoutModal from "@/components/WorkoutModal";
@@ -25,6 +26,13 @@ import type { WorkoutSessionDto, WorkoutSessionStatus } from "@jerai/shared";
 
 export default function ProgressDashboard() {
   const { isDark, toggle } = useTheme();
+  let user = null;
+  try {
+    const auth = useAuth();
+    user = auth.user;
+  } catch {
+    user = null;
+  }
   let workouts: Workout[] = [];
   try {
     const ctx = useWorkoutContext();
@@ -126,7 +134,8 @@ export default function ProgressDashboard() {
             <Activity className="w-4 h-4" /> Member Progress Hub
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
-            Workout <span className="text-primary">Progress & History</span>
+            {user?.name ? `${user.name}'s ` : "Workout "}
+            <span className="text-primary">Progress & History</span>
           </h1>
           <p className="text-muted-foreground mt-2">
             Track your fitness consistency, completed sessions, and caloric burn.

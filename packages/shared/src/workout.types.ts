@@ -91,6 +91,7 @@ export const ROLES: readonly Role[] = ["MEMBER", "ADMIN"] as const;
 
 export interface UserDto {
   id: string;
+  name?: string | null;
   email: string;
   role: Role;
   createdAt?: string;

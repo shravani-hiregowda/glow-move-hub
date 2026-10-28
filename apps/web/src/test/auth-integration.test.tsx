@@ -271,10 +271,12 @@ describe("Frontend AuthContext & ProtectedRoute Integration", () => {
 
       expect(screen.getByText("Create Account")).toBeInTheDocument();
 
+      const nameInput = screen.getByPlaceholderText(/Full Name/i);
       const emailInput = screen.getByPlaceholderText("Email address");
       const passwordInput = screen.getByPlaceholderText(/Password \(min\. 8 characters\)/i);
       const submitBtn = screen.getByRole("button", { name: /create member account/i });
 
+      fireEvent.change(nameInput, { target: { value: "New Member" } });
       fireEvent.change(emailInput, { target: { value: "newmember@example.com" } });
       fireEvent.change(passwordInput, { target: { value: "MemberPass123!" } });
       fireEvent.click(submitBtn);
@@ -283,6 +285,7 @@ describe("Frontend AuthContext & ProtectedRoute Integration", () => {
         expect(api.register).toHaveBeenCalledWith({
           email: "newmember@example.com",
           password: "MemberPass123!",
+          name: "New Member",
         });
       });
     });

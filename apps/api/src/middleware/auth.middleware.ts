@@ -13,6 +13,7 @@ declare global {
     interface Request {
       user?: {
         id: string;
+        name?: string | null;
         email: string;
         role: Role;
       };
@@ -53,6 +54,7 @@ export async function authenticateSession(
         user: {
           select: {
             id: true,
+            name: true,
             email: true,
             role: true,
           },

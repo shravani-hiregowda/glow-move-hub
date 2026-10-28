@@ -36,7 +36,7 @@ export async function register(req: Request, res: Response, next: NextFunction):
       return;
     }
 
-    const { email, password } = parseResult.data;
+    const { name, email, password } = parseResult.data;
 
     // Check if user already exists
     const existing = await prisma.user.findUnique({
@@ -60,12 +60,14 @@ export async function register(req: Request, res: Response, next: NextFunction):
     // Public registrations are strictly created as MEMBER
     const user = await prisma.user.create({
       data: {
+        name: name ? name.trim() : null,
         email,
         passwordHash,
         role: "MEMBER",
       },
       select: {
         id: true,
+        name: true,
         email: true,
         role: true,
         createdAt: true,
@@ -97,6 +99,7 @@ export async function register(req: Request, res: Response, next: NextFunction):
       data: {
         user: {
           id: user.id,
+          name: user.name,
           email: user.email,
           role: user.role,
           createdAt: user.createdAt.toISOString(),
@@ -196,6 +199,7 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
       data: {
         user: {
           id: user.id,
+          name: user.name,
           email: user.email,
           role: user.role,
           createdAt: user.createdAt.toISOString(),
@@ -232,6 +236,7 @@ export async function getMe(req: Request, res: Response): Promise<void> {
     data: {
       user: {
         id: req.user.id,
+        name: req.user.name,
         email: req.user.email,
         role: req.user.role,
       },

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Lock, Mail, Key, ArrowRight, ShieldAlert, UserPlus, LogIn, Loader2 } from "lucide-react";
+import { Lock, Mail, Key, ArrowRight, ShieldAlert, UserPlus, LogIn, Loader2, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
 import { useTheme } from "@/hooks/useTheme";
@@ -9,6 +9,7 @@ import { ApiError } from "@/lib/api-client";
 
 export default function Login() {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -39,6 +40,14 @@ export default function Login() {
       return;
     }
 
+    if (isRegisterMode) {
+      const trimmedName = name.trim();
+      if (!trimmedName || trimmedName.length < 2) {
+        setErrorMessage("Full name is required (minimum 2 characters).");
+        return;
+      }
+    }
+
     if (!password) {
       setErrorMessage("Password is required.");
       return;
@@ -53,7 +62,7 @@ export default function Login() {
 
     try {
       if (isRegisterMode) {
-        const user = await register(trimmedEmail, password);
+        const user = await register(trimmedEmail, password, name.trim());
         // Public registrations are MEMBER; redirect to workouts
         navigate(user.role === "ADMIN" ? "/admin" : "/");
       } else {
@@ -150,6 +159,22 @@ export default function Login() {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-4">
+                {isRegisterMode && (
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Full Name (e.g. Varun Kumar)"
+                      autoComplete="name"
+                      required={isRegisterMode}
+                      disabled={isSubmitting}
+                      className="w-full pl-12 pr-4 py-4 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 focus:bg-secondary transition-all disabled:opacity-50"
+                    />
+                  </div>
+                )}
+
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 pointer-events-none" />
                   <input

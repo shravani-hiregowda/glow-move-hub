@@ -16,18 +16,22 @@ async function initAdminAccount() {
       const passwordHash = await hashPassword(adminPassword);
       await prisma.user.create({
         data: {
+          name: "Shravani Hiregowda",
           email: adminEmail,
           passwordHash,
           role: "ADMIN",
         },
       });
       console.log(`[JERAI FIT API] Administrator account provisioned: ${adminEmail}`);
-    } else if (existing.role !== "ADMIN") {
+    } else {
       await prisma.user.update({
         where: { id: existing.id },
-        data: { role: "ADMIN" },
+        data: {
+          role: "ADMIN",
+          name: existing.name || "Shravani Hiregowda",
+        },
       });
-      console.log(`[JERAI FIT API] Existing account ${adminEmail} promoted to ADMIN`);
+      console.log(`[JERAI FIT API] Administrator account synchronized: ${adminEmail}`);
     }
   } catch (err) {
     console.error("[JERAI FIT API] Note: Admin initialization skipped or deferred:", err);
