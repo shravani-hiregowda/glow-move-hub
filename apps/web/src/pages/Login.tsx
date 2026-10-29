@@ -44,7 +44,9 @@ export default function Login() {
       trimmedEmail = `${trimmedEmail}@jeraifit.com`;
     } else if (
       !trimmedEmail.endsWith("@jeraifit.com") &&
-      !trimmedEmail.endsWith("@example.com")
+      !trimmedEmail.endsWith("@example.com") &&
+      !trimmedEmail.endsWith("@jerai.fit") &&
+      !trimmedEmail.endsWith("@test.local")
     ) {
       setErrorMessage("Email address must end with @jeraifit.com");
       return;

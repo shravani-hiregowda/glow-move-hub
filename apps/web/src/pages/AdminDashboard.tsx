@@ -217,10 +217,10 @@ export default function AdminDashboard() {
               </span>
             </div>
             <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-foreground">
-              Admin <span className="text-primary font-black">Control Center</span>
+              Admin <span className="text-primary font-black">Dashboard & Control Center</span>
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Author training workouts, manage performance nutrition protocols, and monitor cloud storage.
+              Manage your workout library, performance nutrition protocols, and cloud storage diagnostics.
             </p>
           </div>
 
@@ -229,7 +229,7 @@ export default function AdminDashboard() {
               onClick={logout}
               className="px-4 py-2 rounded-xl bg-destructive/10 text-destructive text-xs font-bold hover:bg-destructive/20 transition-all cursor-pointer"
             >
-              Sign Out
+              Log Out
             </button>
             <Link
               to="/"

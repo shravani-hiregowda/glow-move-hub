@@ -94,7 +94,12 @@ export const emailSchema = z
   .refine(
     (email) => {
       if (typeof process !== "undefined" && process.env?.NODE_ENV === "test") {
-        return email.endsWith("@jeraifit.com") || email.endsWith("@example.com") || email.endsWith("@jerai.fit");
+        return (
+          email.endsWith("@jeraifit.com") ||
+          email.endsWith("@example.com") ||
+          email.endsWith("@jerai.fit") ||
+          email.endsWith("@test.local")
+        );
       }
       return email.endsWith("@jeraifit.com");
     },
