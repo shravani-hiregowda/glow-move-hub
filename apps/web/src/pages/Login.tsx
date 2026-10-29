@@ -52,12 +52,10 @@ export default function Login() {
       return;
     }
 
-    if (isRegisterMode) {
-      const trimmedName = name.trim();
-      if (!trimmedName || trimmedName.length < 2) {
-        setErrorMessage("Full name is required (minimum 2 characters).");
-        return;
-      }
+    const resolvedName = (name.trim() || trimmedEmail.split("@")[0] || "Member").slice(0, 50);
+    if (isRegisterMode && name.trim() && name.trim().length < 2) {
+      setErrorMessage("Full name must be at least 2 characters.");
+      return;
     }
 
     if (!password) {
@@ -74,7 +72,7 @@ export default function Login() {
 
     try {
       if (isRegisterMode) {
-        const user = await register(trimmedEmail, password, name.trim());
+        const user = await register(trimmedEmail, password, resolvedName);
         // Public registrations are MEMBER; redirect to workouts
         navigate(user.role === "ADMIN" ? "/admin" : "/");
       } else {
@@ -179,7 +177,6 @@ export default function Login() {
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Full Name (e.g. Varun Kumar)"
                       autoComplete="name"
-                      required={isRegisterMode}
                       disabled={isSubmitting}
                       className="w-full pl-12 pr-4 py-4 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 focus:bg-secondary transition-all disabled:opacity-50"
                     />
