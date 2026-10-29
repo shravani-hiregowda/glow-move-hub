@@ -2,14 +2,14 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Lightbulb, CheckCircle2 } from "lucide-react";
 import { fitnessTips } from "@/data/workouts";
-import { useWorkoutContext } from "@/contexts/WorkoutContext";
+import { useWorkoutContext, FitnessTip } from "@/contexts/WorkoutContext";
 import { useTheme } from "@/hooks/useTheme";
 import Navbar from "@/components/Navbar";
 import { tipIcons } from "@/components/TipsSection";
 
 export default function TipsPage() {
   const { isDark, toggle } = useTheme();
-  let tips = fitnessTips;
+  let tips: FitnessTip[] = fitnessTips;
   try {
     const ctx = useWorkoutContext();
     if (ctx?.tips && ctx.tips.length > 0) {

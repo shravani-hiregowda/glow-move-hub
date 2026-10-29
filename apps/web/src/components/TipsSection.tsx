@@ -20,7 +20,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { fitnessTips } from "@/data/workouts";
-import { useWorkoutContext } from "@/contexts/WorkoutContext";
+import { useWorkoutContext, FitnessTip } from "@/contexts/WorkoutContext";
 
 // Map tip titles or index to sleek brand-colored Lucide icons
 export const tipIcons: Record<string, React.ElementType> = {
@@ -42,7 +42,7 @@ export const tipIcons: Record<string, React.ElementType> = {
 };
 
 export default function TipsSection() {
-  let tips = fitnessTips;
+  let tips: FitnessTip[] = fitnessTips;
   try {
     const ctx = useWorkoutContext();
     if (ctx?.tips && ctx.tips.length > 0) {
