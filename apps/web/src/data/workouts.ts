@@ -72,6 +72,13 @@ export interface Workout {
   description: string;
 }
 
+export interface FitnessTip {
+  icon?: string;
+  title: string;
+  tip: string;
+  category?: string;
+}
+
 export const defaultWorkouts: Workout[] = [
   // CHEST (3)
   {
@@ -492,7 +499,7 @@ export const defaultWorkouts: Workout[] = [
   },
 ];
 
-export const fitnessTips = [
+export const fitnessTips: FitnessTip[] = [
   { icon: "💧", title: "Stay Hydrated", tip: "Drink at least 8 glasses of water daily for optimal performance and muscle recovery." },
   { icon: "😴", title: "Rest & Recovery", tip: "Muscles grow during rest. Aim for 7-9 hours of sleep to optimize testosterone and GH release." },
   { icon: "🥗", title: "Nutrition First", tip: "You can't out-train a bad diet. Focus on whole foods, lean proteins, and complex carbs." },

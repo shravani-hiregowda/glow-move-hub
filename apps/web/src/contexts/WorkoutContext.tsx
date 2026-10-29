@@ -13,16 +13,11 @@ import {
   QueryClientProvider,
   QueryClientContext,
 } from "@tanstack/react-query";
-import { Workout, defaultWorkouts, fitnessTips } from "@/data/workouts";
+import { Workout, defaultWorkouts, fitnessTips, FitnessTip } from "@/data/workouts";
 import { api, ApiError } from "@/lib/api-client";
 import { toast } from "sonner";
 
-export interface FitnessTip {
-  icon?: string;
-  title: string;
-  tip: string;
-  category?: string;
-}
+export type { FitnessTip };
 
 export interface WorkoutContextType {
   workouts: Workout[];
