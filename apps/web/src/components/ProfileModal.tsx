@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -9,6 +10,7 @@ import {
   Target,
   RefreshCw,
   LogOut,
+  ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -19,6 +21,7 @@ interface ProfileModalProps {
 }
 
 export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
+  const navigate = useNavigate();
   const { user, updateProfile, logout } = useAuth();
   const [targetWeight, setTargetWeight] = useState(user?.targetWeight ? String(user.targetWeight) : "");
   const [isUpdating, setIsUpdating] = useState(false);
@@ -154,57 +157,109 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               </div>
             </div>
 
-            {/* Target Weight Goal Setting Form */}
-            <form onSubmit={handleSaveGoal} className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Target className="w-4 h-4 text-primary" /> Fitness Goal (Target Weight)
-                </h3>
-                {user.targetWeight && (
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Current Goal: <span className="text-primary font-bold">{user.targetWeight} kg</span>
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  Target Goal (kg)
-                </label>
-                <div className="relative">
-                  <Target className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="20"
-                    max="500"
-                    value={targetWeight}
-                    onChange={(e) => setTargetWeight(e.target.value)}
-                    placeholder="e.g. 70.0"
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-secondary/40 border border-border text-foreground text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  />
+            {/* Conditional Content: Admin System Control vs Member Fitness Goal */}
+            {user.role === "ADMIN" ? (
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4" /> Platform Authority
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-semibold border border-amber-500/30">
+                      SUPERADMIN
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Administrator accounts maintain platform stability, curate athletic training workouts, manage performance protocols, and monitor CDN cloud assets.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
+                    <div className="p-2.5 rounded-xl bg-card border border-border/80">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground">Catalog Workouts</div>
+                      <div className="font-semibold text-foreground mt-0.5">Full CRUD & Media</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-card border border-border/80">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground">Tips & Guidance</div>
+                      <div className="font-semibold text-foreground mt-0.5">Live Sync Authoring</div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  Powers the reference goal line on the Weight Tracker chart in your Progress tab.
-                </p>
-              </div>
 
-              <button
-                type="submit"
-                disabled={isUpdating}
-                className="w-full py-2.5 px-4 rounded-xl gradient-primary text-primary-foreground font-semibold text-xs flex items-center justify-center gap-2 neon-glow hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer"
-              >
-                {isUpdating ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Updating Goal...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-3.5 h-3.5" /> Save Target Goal
-                  </>
-                )}
-              </button>
-            </form>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate("/admin");
+                      onClose();
+                    }}
+                    className="w-full py-2.5 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
+                  >
+                    <ShieldCheck className="w-4 h-4" /> Open Admin Control Center
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate("/tips");
+                      onClose();
+                    }}
+                    className="w-full py-2.5 px-4 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground font-semibold text-xs flex items-center justify-center gap-2 transition-all border border-border cursor-pointer"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" /> View Performance Protocols
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Target Weight Goal Setting Form for Athletes/Members */
+              <form onSubmit={handleSaveGoal} className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Target className="w-4 h-4 text-primary" /> Fitness Goal (Target Weight)
+                  </h3>
+                  {user.targetWeight && (
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Current Goal: <span className="text-primary font-bold">{user.targetWeight} kg</span>
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
+                    Target Goal (kg)
+                  </label>
+                  <div className="relative">
+                    <Target className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="20"
+                      max="500"
+                      value={targetWeight}
+                      onChange={(e) => setTargetWeight(e.target.value)}
+                      placeholder="e.g. 70.0"
+                      className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-secondary/40 border border-border text-foreground text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Powers the reference goal line on the Weight Tracker chart in your Progress tab.
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isUpdating}
+                  className="w-full py-2.5 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs flex items-center justify-center gap-2 shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {isUpdating ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Updating Goal...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-3.5 h-3.5" /> Save Target Goal
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
           </div>
 
           {/* Sticky Modal Footer with Sign Out and Close Buttons */}

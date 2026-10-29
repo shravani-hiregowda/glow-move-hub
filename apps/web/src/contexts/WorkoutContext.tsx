@@ -3,6 +3,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useMemo,
   ReactNode,
 } from "react";
 import {
@@ -12,9 +13,16 @@ import {
   QueryClientProvider,
   QueryClientContext,
 } from "@tanstack/react-query";
-import { Workout, defaultWorkouts } from "@/data/workouts";
+import { Workout, defaultWorkouts, fitnessTips } from "@/data/workouts";
 import { api, ApiError } from "@/lib/api-client";
 import { toast } from "sonner";
+
+export interface FitnessTip {
+  icon?: string;
+  title: string;
+  tip: string;
+  category?: string;
+}
 
 export interface WorkoutContextType {
   workouts: Workout[];
@@ -28,6 +36,10 @@ export interface WorkoutContextType {
   deleteWorkout: (id: string) => Promise<void> | void;
   restoreDefaults: () => Promise<void> | void;
   refetchWorkouts: () => void;
+  tips: FitnessTip[];
+  addTip: (tip: FitnessTip) => void;
+  updateTip: (index: number, tip: FitnessTip) => void;
+  deleteTip: (index: number) => void;
 }
 
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
@@ -60,7 +72,13 @@ function InnerWorkoutProvider({ children }: { children: ReactNode }) {
               Boolean(w && typeof w === "object" && typeof w.id === "string" && typeof w.title === "string")
           );
           if (validWorkouts.length > 0) {
-            return validWorkouts;
+            return validWorkouts.map((w) => {
+              const def = defaultWorkouts.find((d) => d.id === w.id);
+              if (def) {
+                return { ...w, image: def.image };
+              }
+              return w;
+            });
           }
         }
         try {
@@ -83,6 +101,61 @@ function InnerWorkoutProvider({ children }: { children: ReactNode }) {
     }
     return defaultWorkouts;
   });
+
+  // Tips state persisted in localStorage
+  const [tips, setTips] = useState<FitnessTip[]>(() => {
+    if (typeof window === "undefined" || !window.localStorage) return fitnessTips;
+    try {
+      const saved = localStorage.getItem("jerai_custom_tips");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // ignore
+    }
+    return fitnessTips;
+  });
+
+  const addTip = (newTip: FitnessTip) => {
+    setTips((prev) => {
+      const next = [newTip, ...prev];
+      try {
+        localStorage.setItem("jerai_custom_tips", JSON.stringify(next));
+      } catch {
+        // quota safety
+      }
+      return next;
+    });
+    toast.success("New protocol tip published successfully!");
+  };
+
+  const updateTip = (index: number, updatedTip: FitnessTip) => {
+    setTips((prev) => {
+      const next = [...prev];
+      next[index] = updatedTip;
+      try {
+        localStorage.setItem("jerai_custom_tips", JSON.stringify(next));
+      } catch {
+        // quota safety
+      }
+      return next;
+    });
+    toast.success("Protocol tip updated!");
+  };
+
+  const deleteTip = (index: number) => {
+    setTips((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      try {
+        localStorage.setItem("jerai_custom_tips", JSON.stringify(next));
+      } catch {
+        // quota safety
+      }
+      return next;
+    });
+    toast.success("Protocol tip removed");
+  };
 
   // Query PostgreSQL API via TanStack Query
   const {
@@ -129,8 +202,17 @@ function InnerWorkoutProvider({ children }: { children: ReactNode }) {
     }
   }, [localWorkouts]);
 
-  // Use API response when available, otherwise fall back to localWorkouts
-  const workouts = apiResponse && apiResponse.length > 0 ? apiResponse : localWorkouts;
+  // Use API response when available, otherwise fall back to localWorkouts, ensuring each default workout resolves to its unique image
+  const workouts = useMemo(() => {
+    const raw = apiResponse && apiResponse.length > 0 ? apiResponse : localWorkouts;
+    return raw.map((w) => {
+      const def = defaultWorkouts.find((d) => d.id === w.id);
+      if (def) {
+        return { ...w, image: def.image };
+      }
+      return w;
+    });
+  }, [apiResponse, localWorkouts]);
 
   const addWorkout = (w: Workout) => {
     setMutationError(null);
@@ -207,6 +289,10 @@ function InnerWorkoutProvider({ children }: { children: ReactNode }) {
         deleteWorkout,
         restoreDefaults,
         refetchWorkouts: () => refetch(),
+        tips,
+        addTip,
+        updateTip,
+        deleteTip,
       }}
     >
       {children}

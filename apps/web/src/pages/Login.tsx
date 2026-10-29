@@ -99,44 +99,43 @@ export default function Login() {
       <Navbar isDark={isDark} onToggleTheme={toggle} activeSection="admin" onNavigate={() => {}} />
 
       <main className="flex-1 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Animated Background Orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] mix-blend-screen pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-[120px] mix-blend-screen pointer-events-none" />
+        {/* Subtle authentic lighting gradient */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent pointer-events-none" />
 
         <motion.div
           className="w-full max-w-md"
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          transition={{ duration: 0.45, ease: "easeOut" }}
         >
           {/* Card */}
           <motion.div
-            className="p-8 sm:p-10 rounded-3xl bg-card/80 backdrop-blur-xl border border-border/50 shadow-2xl relative overflow-hidden"
+            className="p-8 sm:p-10 rounded-2xl bg-card border border-border/80 soft-shadow relative overflow-hidden"
             animate={errorMessage ? { x: [-10, 10, -10, 10, 0] } : {}}
             transition={{ duration: 0.4 }}
           >
-            {/* Inner glow effect on top border */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0 opacity-50" />
+            {/* Top border accent line */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-primary/70" />
 
             <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 rounded-2xl bg-secondary border border-border shadow-inner flex items-center justify-center">
-                <Lock className="w-8 h-8 text-primary group-hover:scale-110 transition-transform" />
+              <div className="w-14 h-14 rounded-xl bg-secondary/80 border border-border/70 flex items-center justify-center">
+                <Lock className="w-7 h-7 text-primary" />
               </div>
             </div>
 
             <div className="text-center mb-6">
-              <h1 className="font-display text-3xl font-bold text-foreground mb-2">
+              <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mb-1.5">
                 {isRegisterMode ? "Create Account" : "Access Portal"}
               </h1>
-              <p className="text-muted-foreground text-sm">
+              <p className="font-body text-muted-foreground text-sm leading-relaxed">
                 {isRegisterMode
                   ? "Register a new Member account (@jeraifit.com required)."
-                  : "Sign in with your @jeraifit.com email and password."}
+                  : "Sign in with your verified member credentials."}
               </p>
             </div>
 
             {/* Mode switch tabs */}
-            <div className="flex p-1 mb-6 rounded-xl bg-secondary/60 border border-border">
+            <div className="flex p-1 mb-6 rounded-xl bg-secondary/80 border border-border/70">
               <button
                 type="button"
                 onClick={() => {
@@ -228,9 +227,9 @@ export default function Login() {
               <motion.button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-4 mt-2 rounded-xl gradient-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 neon-glow hover:opacity-90 transition-all font-display tracking-wide group disabled:opacity-50 disabled:pointer-events-none"
-                whileHover={!isSubmitting ? { scale: 1.02 } : {}}
-                whileTap={!isSubmitting ? { scale: 0.98 } : {}}
+                className="w-full py-3.5 mt-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-display font-bold text-sm tracking-wide flex items-center justify-center gap-2 shadow-xs transition-all group disabled:opacity-50 disabled:pointer-events-none"
+                whileHover={!isSubmitting ? { scale: 1.01 } : {}}
+                whileTap={!isSubmitting ? { scale: 0.99 } : {}}
               >
                 {isSubmitting ? (
                   <>

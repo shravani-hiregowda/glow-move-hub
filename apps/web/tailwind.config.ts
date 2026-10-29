@@ -13,8 +13,18 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Space Grotesk", "sans-serif"],
-        body: ["Inter", "sans-serif"],
+        display: ["'Inter Tight'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        body: ["'Plus Jakarta Sans'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        sans: ["'Plus Jakarta Sans'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+      },
+      letterSpacing: {
+        tighter: "-0.035em",
+        tight: "-0.02em",
+        snug: "-0.01em",
+        normal: "0em",
+        wide: "0.02em",
+        wider: "0.05em",
+        widest: "0.1em",
       },
       colors: {
         border: "hsl(var(--border))",

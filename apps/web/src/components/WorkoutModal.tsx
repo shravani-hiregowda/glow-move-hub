@@ -11,6 +11,11 @@ import {
   Check,
   AlertCircle,
   Flag,
+  Dumbbell,
+  Layers,
+  Activity,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import {
   useQuery,
@@ -26,6 +31,52 @@ import { toast } from "sonner";
 import { createContext } from "react";
 import type { UserDto } from "@jerai/shared";
 
+/**
+ * Synthesizes a crisp athletic interval completion chime using Web Audio API.
+ * Requires zero external audio assets, works offline, and plays instantly.
+ */
+function playIntervalChime() {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    // Harmonic chime tone 1: A5 (880Hz)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(880, now);
+    gain1.gain.setValueAtTime(0.25, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.22);
+
+    // Harmonic chime tone 2: D6 (1174.66Hz)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(1174.66, now + 0.1);
+    gain2.gain.setValueAtTime(0.28, now + 0.1);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.1);
+    osc2.stop(now + 0.5);
+
+    setTimeout(() => {
+      ctx.close().catch(() => {});
+    }, 600);
+  } catch {
+    // Autoplay restrictions or headless test environments
+  }
+}
+
 const fallbackQueryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -33,6 +84,89 @@ const fallbackQueryClient = new QueryClient({
     },
   },
 });
+
+const workoutProtocolSpecs: Record<
+  string,
+  { primary: string; secondary: string; equipment: string; rpe: string; sets: string }
+> = {
+  Chest: {
+    primary: "Pectoralis Major & Minor",
+    secondary: "Anterior Deltoids, Triceps",
+    equipment: "Dumbbells, Barbell, Adjustable Bench",
+    rpe: "RPE 8.0 - 8.5",
+    sets: "3 - 4 Sets × 8-12 Reps",
+  },
+  Back: {
+    primary: "Latissimus Dorsi, Rhomboids",
+    secondary: "Biceps Brachii, Posterior Deltoid",
+    equipment: "Pull-Up Rig, Cable Pulley, V-Bar",
+    rpe: "RPE 8.5",
+    sets: "4 Sets × 8-10 Reps",
+  },
+  Legs: {
+    primary: "Quadriceps, Gluteus Maximus",
+    secondary: "Hamstrings, Calves, Core",
+    equipment: "Olympic Barbell, 45° Sled, Rack",
+    rpe: "RPE 9.0",
+    sets: "4 Sets × 10-12 Reps",
+  },
+  Arms: {
+    primary: "Biceps Brachii, Triceps Lateral",
+    secondary: "Brachialis, Wrist Flexors",
+    equipment: "Hex Dumbbells, Cable Station",
+    rpe: "RPE 7.5 - 8.0",
+    sets: "3 Sets × 12-15 Reps",
+  },
+  Core: {
+    primary: "Rectus Abdominis, Obliques",
+    secondary: "Transverse Abdominis, Hip Flexors",
+    equipment: "Floor Mat, Medicine Ball",
+    rpe: "RPE 8.0",
+    sets: "3 - 4 Rounds × 45-60s",
+  },
+  "Full Body": {
+    primary: "Total Body Kinetic Chain",
+    secondary: "Cardiovascular Engine",
+    equipment: "Barbell, Bumper Plates, Kettlebell",
+    rpe: "RPE 9.0",
+    sets: "4 - 5 Complex Rounds",
+  },
+  Shoulders: {
+    primary: "Deltoids (Medial & Anterior)",
+    secondary: "Upper Trapezius, Triceps",
+    equipment: "Dumbbells, Dual Cable Station",
+    rpe: "RPE 8.0",
+    sets: "4 Sets × 10-15 Reps",
+  },
+  Triceps: {
+    primary: "Triceps Long & Lateral Heads",
+    secondary: "Anconeus, Forearms",
+    equipment: "Cable Rope Attachment, EZ Bar",
+    rpe: "RPE 7.5",
+    sets: "3 - 4 Sets × 12 Reps",
+  },
+  Biceps: {
+    primary: "Biceps Short & Long Heads",
+    secondary: "Brachioradialis",
+    equipment: "Hex Dumbbells, Preacher Bench",
+    rpe: "RPE 7.5",
+    sets: "3 - 4 Sets × 10-12 Reps",
+  },
+  "Fat Loss": {
+    primary: "Metabolic Full-Body Conditioning",
+    secondary: "Cardiorespiratory Capacity",
+    equipment: "Battle Ropes, Sled, Kettlebell",
+    rpe: "RPE 9.5 (High Output)",
+    sets: "5 High-Output Intervals",
+  },
+  Cardio: {
+    primary: "Aerobic & Anaerobic Engine",
+    secondary: "Lower-Body Muscular Endurance",
+    equipment: "Track, Concept2 Rower, Jump Rope",
+    rpe: "RPE 8.5",
+    sets: "8 Sprint Intervals / Steady Pace",
+  },
+};
 
 interface WorkoutModalProps {
   workout: Workout | null;
@@ -56,6 +190,7 @@ function InnerWorkoutModal({ workout, onClose }: WorkoutModalProps) {
   const [isCompletedState, setIsCompletedState] = useState(false);
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
   const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
+  const [isSoundMuted, setIsSoundMuted] = useState(false);
 
   // Sync state when a new workout is opened
   useEffect(() => {
@@ -195,7 +330,7 @@ function InnerWorkoutModal({ workout, onClose }: WorkoutModalProps) {
     return Math.max(0, maxTime - timerLeft);
   };
 
-  // Timer interval
+  // Timer interval with Web Audio interval completion cue
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (timerActive && timerLeft > 0) {
@@ -203,10 +338,16 @@ function InnerWorkoutModal({ workout, onClose }: WorkoutModalProps) {
         setTimerLeft((t) => t - 1);
       }, 1000);
     } else if (timerLeft === 0) {
+      if (timerActive) {
+        if (!isSoundMuted) {
+          playIntervalChime();
+        }
+        toast.success("Interval complete! Take your recovery rest.");
+      }
       setTimerActive(false);
     }
     return () => clearInterval(interval);
-  }, [timerActive, timerLeft]);
+  }, [timerActive, timerLeft, isSoundMuted]);
 
   const toggleStep = (index: number) => {
     const newSet = new Set(completedSteps);
@@ -378,14 +519,46 @@ function InnerWorkoutModal({ workout, onClose }: WorkoutModalProps) {
               </h2>
               <p className="text-muted-foreground mb-6">{workout.description}</p>
 
-              <div className="flex gap-6 mb-8">
+              <div className="flex gap-6 mb-6">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Clock className="w-5 h-5 text-primary" /> {workout.duration}
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Flame className="w-5 h-5 text-cyan" /> {workout.calories} cal
+                  <Flame className="w-5 h-5 text-primary" /> {workout.calories} kcal
                 </div>
               </div>
+
+              {/* Protocol Specifications Panel */}
+              {(() => {
+                const specs = workoutProtocolSpecs[workout.bodyPart] || workoutProtocolSpecs["Full Body"];
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-8">
+                    <div className="p-3.5 rounded-xl bg-secondary/50 border border-border/70">
+                      <span className="text-[10px] font-semibold tracking-wider uppercase text-primary mb-1 flex items-center gap-1">
+                        <Layers className="w-3 h-3" /> Target Muscles
+                      </span>
+                      <div className="text-xs font-semibold text-foreground">{specs.primary}</div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">{specs.secondary}</div>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-secondary/50 border border-border/70">
+                      <span className="text-[10px] font-semibold tracking-wider uppercase text-primary mb-1 flex items-center gap-1">
+                        <Dumbbell className="w-3 h-3" /> Equipment
+                      </span>
+                      <div className="text-xs font-semibold text-foreground">{specs.equipment}</div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">Commercial Standard</div>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-secondary/50 border border-border/70">
+                      <span className="text-[10px] font-semibold tracking-wider uppercase text-primary mb-1 flex items-center gap-1">
+                        <Activity className="w-3 h-3" /> Target RPE & Sets
+                      </span>
+                      <div className="text-xs font-semibold text-foreground">{specs.rpe}</div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">{specs.sets}</div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Congratulatory completion banner */}
               {isCompletedState && (
@@ -487,7 +660,7 @@ function InnerWorkoutModal({ workout, onClose }: WorkoutModalProps) {
                           {formatTime(timerLeft)}
                         </div>
                         {timerLeft === 0 && (
-                          <span className="text-xs text-primary font-bold mt-1 uppercase tracking-widest neon-text">
+                          <span className="text-xs text-primary font-bold mt-1 uppercase tracking-widest">
                             Done!
                           </span>
                         )}
@@ -498,10 +671,10 @@ function InnerWorkoutModal({ workout, onClose }: WorkoutModalProps) {
                       <div className="flex gap-3 w-full">
                         <button
                           onClick={handleStartTimer}
-                          className={`flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 ${
+                          className={`flex-1 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95 ${
                             timerActive
-                              ? "bg-secondary text-foreground hover:bg-secondary/80 border border-border"
-                              : "gradient-primary text-primary-foreground neon-glow hover:opacity-90"
+                              ? "bg-secondary text-foreground hover:bg-secondary/80 border border-border/80"
+                              : "bg-primary text-primary-foreground hover:bg-primary/90"
                           }`}
                         >
                           {timerActive ? (
@@ -516,11 +689,23 @@ function InnerWorkoutModal({ workout, onClose }: WorkoutModalProps) {
                           )}
                         </button>
                         <button
+                          type="button"
+                          onClick={() => setIsSoundMuted(!isSoundMuted)}
+                          className={`p-4 rounded-2xl border transition-colors shadow-md active:scale-95 cursor-pointer ${
+                            isSoundMuted
+                              ? "bg-secondary/40 text-muted-foreground border-border"
+                              : "bg-secondary text-primary border-primary/30 hover:bg-secondary/80"
+                          }`}
+                          title={isSoundMuted ? "Unmute Interval Audio Chime" : "Mute Interval Audio Chime"}
+                        >
+                          {isSoundMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                        </button>
+                        <button
                           onClick={() => {
                             setTimerActive(false);
                             setTimerLeft(maxTime);
                           }}
-                          className="p-4 rounded-2xl bg-secondary border border-border text-foreground hover:bg-secondary/80 transition-colors shadow-md active:scale-95"
+                          className="p-4 rounded-2xl bg-secondary border border-border text-foreground hover:bg-secondary/80 transition-colors shadow-md active:scale-95 cursor-pointer"
                           title="Reset Timer"
                         >
                           <RotateCcw className="w-5 h-5" />

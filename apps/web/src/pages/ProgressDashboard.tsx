@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Trophy,
@@ -13,6 +14,7 @@ import {
   ChevronRight,
   Activity,
   Calendar,
+  ShieldCheck,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
@@ -116,6 +118,55 @@ export default function ProgressDashboard() {
   const sessions = historyData?.data || [];
   const pagination = historyData?.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 };
 
+  if (user?.role === "ADMIN") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar
+          isDark={isDark}
+          onToggleTheme={toggle}
+          activeSection="admin"
+          onNavigate={() => {}}
+        />
+        <main className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-2xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="p-8 sm:p-12 rounded-3xl bg-card border border-border shadow-xl space-y-6"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center mx-auto shadow-xs">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                Administrator Privileges Active
+              </span>
+              <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-foreground mt-3">
+                Member Progress Hub Not Applicable
+              </h1>
+              <p className="text-muted-foreground text-sm mt-3 leading-relaxed max-w-md mx-auto">
+                Personal workout history and progress tracking are designated for member athlete profiles. As a platform administrator, your authority is centered in the Admin Control Center.
+              </p>
+            </div>
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                to="/admin"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm shadow-xs transition-all"
+              >
+                Open Admin Dashboard
+              </Link>
+              <Link
+                to="/"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground font-semibold text-sm border border-border transition-all"
+              >
+                Return to Workouts
+              </Link>
+            </div>
+          </motion.div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar
@@ -170,7 +221,7 @@ export default function ProgressDashboard() {
             </div>
             <button
               onClick={() => handleResumeWorkout(summary.activeSession!)}
-              className="py-2.5 px-5 rounded-xl font-bold text-sm gradient-primary text-primary-foreground neon-glow hover:opacity-90 flex items-center gap-2"
+              className="py-2.5 px-5 rounded-xl font-bold text-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs flex items-center gap-2 transition-all"
             >
               Resume Workout <ArrowRight className="w-4 h-4" />
             </button>
@@ -183,9 +234,9 @@ export default function ProgressDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="p-6 rounded-3xl bg-card border border-border soft-shadow flex items-center gap-4"
+            className="p-6 rounded-2xl bg-card border border-border/80 soft-shadow flex items-center gap-4"
           >
-            <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Trophy className="w-7 h-7" />
             </div>
             <div>
@@ -200,9 +251,9 @@ export default function ProgressDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="p-6 rounded-3xl bg-card border border-border soft-shadow flex items-center gap-4"
+            className="p-6 rounded-2xl bg-card border border-border/80 soft-shadow flex items-center gap-4"
           >
-            <div className="w-14 h-14 rounded-2xl bg-cyan/10 text-cyan flex items-center justify-center shrink-0">
+            <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Clock className="w-7 h-7" />
             </div>
             <div>

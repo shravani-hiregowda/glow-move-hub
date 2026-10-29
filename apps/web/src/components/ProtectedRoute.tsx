@@ -31,7 +31,7 @@ export default function ProtectedRoute({ requireAdmin = true }: ProtectedRoutePr
           </p>
           <a
             href="/"
-            className="inline-flex px-6 py-3 rounded-xl gradient-primary text-primary-foreground font-semibold neon-glow hover:opacity-90 transition-all text-sm"
+            className="inline-flex px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xs transition-all text-sm"
           >
             Return to Workouts
           </a>

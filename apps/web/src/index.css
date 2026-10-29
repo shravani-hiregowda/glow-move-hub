@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,500;0,600;0,700;0,800;0,900;1,600;1,700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,75 +6,94 @@
 
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 220 25% 10%;
+    /* Natural Athletic Palette - Light Mode */
+    --background: 216 20% 98%;
+    --foreground: 222 24% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 10%;
+    --card-foreground: 222 24% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 10%;
-    --primary: 145 80% 32%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 15% 92%;
-    --secondary-foreground: 220 25% 15%;
-    --muted: 220 15% 94%;
-    --muted-foreground: 220 12% 40%;
-    --accent: 195 90% 40%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 50%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 15% 85%;
-    --input: 220 15% 85%;
-    --ring: 145 80% 32%;
-    --radius: 1rem;
+    --popover-foreground: 222 24% 12%;
 
-    --neon: 145 80% 35%;
-    --neon-glow: 145 90% 45%;
-    --cyan: 195 90% 40%;
-    --surface-glass: 0 0% 100% / 0.7;
-    --surface-glass-border: 0 0% 100% / 0.3;
+    /* Crisp Athletic Emerald (High contrast & natural energy) */
+    --primary: 152 69% 36%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 215 16% 93%;
+    --secondary-foreground: 222 24% 14%;
+    --muted: 215 16% 94%;
+    --muted-foreground: 218 12% 44%;
+
+    /* Refined neutral slate accent (Replacing neon cyan) */
+    --accent: 215 18% 30%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 216 16% 88%;
+    --input: 216 16% 88%;
+    --ring: 152 69% 36%;
+    --radius: 0.875rem;
+
+    /* Backward compatibility mapping to authentic athletic palette */
+    --neon: 152 69% 36%;
+    --neon-glow: 152 69% 36%;
+    --cyan: 215 18% 30%;
+    --surface-glass: 0 0% 100% / 0.85;
+    --surface-glass-border: 216 16% 88% / 0.8;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 25% 10%;
-    --sidebar-primary: 145 80% 32%;
+    --sidebar-foreground: 222 24% 12%;
+    --sidebar-primary: 152 69% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 94%;
-    --sidebar-accent-foreground: 220 25% 10%;
-    --sidebar-border: 220 15% 85%;
-    --sidebar-ring: 145 80% 32%;
+    --sidebar-accent: 215 16% 93%;
+    --sidebar-accent-foreground: 222 24% 12%;
+    --sidebar-border: 216 16% 88%;
+    --sidebar-ring: 152 69% 36%;
   }
 
   .dark {
-    --background: 225 25% 6%;
-    --foreground: 210 20% 92%;
-    --card: 225 20% 10%;
-    --card-foreground: 210 20% 92%;
-    --popover: 225 20% 10%;
-    --popover-foreground: 210 20% 92%;
-    --primary: 145 80% 45%;
-    --primary-foreground: 220 25% 5%;
-    --secondary: 225 18% 15%;
-    --secondary-foreground: 210 20% 90%;
-    --muted: 225 18% 14%;
-    --muted-foreground: 220 10% 65%;
-    --accent: 195 90% 50%;
-    --accent-foreground: 220 25% 5%;
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 210 20% 92%;
-    --border: 225 15% 18%;
-    --input: 225 15% 18%;
-    --ring: 145 80% 45%;
+    /* Sleek Obsidian / Performance Slate - Dark Mode */
+    --background: 224 24% 7%;
+    --foreground: 210 20% 94%;
+    --card: 224 20% 11%;
+    --card-foreground: 210 20% 94%;
+    --popover: 224 20% 11%;
+    --popover-foreground: 210 20% 94%;
 
-    --surface-glass: 225 25% 10% / 0.6;
-    --surface-glass-border: 225 15% 25% / 0.4;
+    /* Athletic Emerald with high clarity on dark backgrounds */
+    --primary: 151 65% 45%;
+    --primary-foreground: 224 24% 6%;
 
-    --sidebar-background: 225 25% 8%;
+    --secondary: 224 16% 16%;
+    --secondary-foreground: 210 20% 92%;
+    --muted: 224 16% 15%;
+    --muted-foreground: 218 12% 64%;
+
+    /* Subdued slate accent */
+    --accent: 215 16% 24%;
+    --accent-foreground: 210 20% 94%;
+
+    --destructive: 0 62% 38%;
+    --destructive-foreground: 210 20% 94%;
+    --border: 224 15% 18%;
+    --input: 224 15% 18%;
+    --ring: 151 65% 45%;
+
+    /* Backward compatibility mapping */
+    --neon: 151 65% 45%;
+    --neon-glow: 151 65% 45%;
+    --cyan: 218 12% 64%;
+    --surface-glass: 224 20% 11% / 0.8;
+    --surface-glass-border: 224 15% 22% / 0.6;
+
+    --sidebar-background: 224 24% 9%;
     --sidebar-foreground: 210 20% 92%;
-    --sidebar-primary: 145 80% 42%;
-    --sidebar-primary-foreground: 220 25% 5%;
-    --sidebar-accent: 225 18% 14%;
+    --sidebar-primary: 151 65% 45%;
+    --sidebar-primary-foreground: 224 24% 6%;
+    --sidebar-accent: 224 16% 15%;
     --sidebar-accent-foreground: 210 20% 92%;
-    --sidebar-border: 225 15% 18%;
-    --sidebar-ring: 145 80% 42%;
+    --sidebar-border: 224 15% 18%;
+    --sidebar-ring: 151 65% 45%;
   }
 }
 
@@ -83,7 +102,11 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body antialiased;
+    @apply bg-background text-foreground font-body antialiased tracking-normal;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight text-foreground;
   }
   html {
     scroll-behavior: smooth;
@@ -93,35 +116,47 @@
 @layer utilities {
   .glass {
     background: hsl(var(--surface-glass));
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid hsl(var(--surface-glass-border));
   }
   .glass-strong {
     background: hsl(var(--surface-glass));
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border: 1px solid hsl(var(--surface-glass-border));
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border-bottom: 1px solid hsl(var(--surface-glass-border));
   }
+
+  /* Refined authentic shadows (no radioactive neon haze) */
   .neon-glow {
-    box-shadow: 0 0 20px hsl(var(--neon) / 0.3), 0 0 60px hsl(var(--neon) / 0.1);
+    box-shadow: 0 4px 14px 0 hsl(var(--primary) / 0.25);
   }
   .neon-text {
-    text-shadow: 0 0 20px hsl(var(--neon) / 0.5), 0 0 40px hsl(var(--neon) / 0.2);
+    text-shadow: none;
   }
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--neon)), hsl(var(--cyan)));
+    background: hsl(var(--primary));
   }
   .gradient-dark {
-    background: linear-gradient(135deg, hsl(225 25% 6%), hsl(225 30% 12%));
+    background: linear-gradient(135deg, hsl(224 24% 7%), hsl(224 20% 12%));
   }
   .gradient-hero {
-    background: linear-gradient(160deg, hsl(225 25% 8%) 0%, hsl(225 30% 4%) 50%, hsl(145 40% 8%) 100%);
+    background: linear-gradient(160deg, hsl(224 24% 9%) 0%, hsl(224 20% 7%) 60%, hsl(152 40% 10%) 100%);
   }
   .soft-shadow {
-    box-shadow: 0 8px 32px hsl(220 25% 10% / 0.08), 0 2px 8px hsl(220 25% 10% / 0.04);
+    box-shadow: 0 2px 8px -2px hsl(222 24% 12% / 0.06), 0 8px 24px -4px hsl(222 24% 12% / 0.04);
   }
   .dark .soft-shadow {
-    box-shadow: 0 8px 32px hsl(0 0% 0% / 0.3), 0 2px 8px hsl(0 0% 0% / 0.2);
+    box-shadow: 0 4px 12px -2px hsl(0 0% 0% / 0.35), 0 12px 32px -4px hsl(0 0% 0% / 0.25);
+  }
+  .card-elevated {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .card-elevated:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px -6px hsl(222 24% 12% / 0.1), 0 6px 14px -4px hsl(222 24% 12% / 0.06);
+  }
+  .dark .card-elevated:hover {
+    box-shadow: 0 16px 36px -6px hsl(0 0% 0% / 0.45), 0 8px 18px -4px hsl(0 0% 0% / 0.3);
   }
 }

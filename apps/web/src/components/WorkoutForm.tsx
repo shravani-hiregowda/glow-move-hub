@@ -369,7 +369,7 @@ export default function WorkoutForm({ initialData, onSave, onCancel }: WorkoutFo
           <motion.button
             type="submit"
             disabled={isUploadingImage}
-            className="flex-1 py-3 rounded-2xl gradient-primary text-primary-foreground font-display font-semibold neon-glow disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-display font-bold text-sm tracking-wide shadow-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
             whileHover={{ scale: isUploadingImage ? 1 : 1.02 }}
             whileTap={{ scale: isUploadingImage ? 1 : 0.98 }}
           >

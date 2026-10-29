@@ -135,7 +135,7 @@ export default function WeightTracker({ isDark = true }: WeightTrackerProps) {
 
         <button
           onClick={() => setShowLogForm(!showLogForm)}
-          className="self-start sm:self-center py-2 px-4 rounded-xl font-bold text-xs gradient-primary text-primary-foreground neon-glow hover:opacity-90 flex items-center gap-1.5 transition-all"
+          className="self-start sm:self-center py-2 px-4 rounded-xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs flex items-center gap-1.5 transition-all"
         >
           <Plus className="w-4 h-4" /> Log Weight
         </button>
@@ -257,7 +257,7 @@ export default function WeightTracker({ isDark = true }: WeightTrackerProps) {
                 <button
                   type="submit"
                   disabled={createMutation.isPending}
-                  className="py-1.5 px-4 rounded-xl gradient-primary text-primary-foreground font-semibold text-xs flex items-center gap-1.5 neon-glow disabled:opacity-50"
+                  className="py-1.5 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs flex items-center gap-1.5 shadow-xs disabled:opacity-50"
                 >
                   {createMutation.isPending ? (
                     <>

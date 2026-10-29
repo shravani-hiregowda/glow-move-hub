@@ -1,18 +1,46 @@
 import workout1 from "@/assets/workout-1.jpg";
-import workout2 from "@/assets/workout-2.jpg";
-import workout3 from "@/assets/workout-3.jpg";
-import workout4 from "@/assets/workout-4.jpg";
+import workoutBenchPress from "@/assets/workout-bench-press.jpg";
+import workoutCableCrossovers from "@/assets/workout-cable-crossovers.jpg";
+
 import workout5 from "@/assets/workout-5.jpg";
+import workoutDeadlifts from "@/assets/workout-deadlifts.jpg";
+import workoutCableRows from "@/assets/workout-cable-rows.jpg";
+
+import workout2 from "@/assets/workout-2.jpg";
 import workout6 from "@/assets/workout-6.jpg";
-import workoutTriceps from "@/assets/workout-triceps.png";
-import workoutFatLoss from "@/assets/workout-fatloss.png";
-import workoutCardio from "@/assets/workout-cardio.png";
-import workoutShoulders from "@/assets/workout-shoulders.png";
+import workoutLegPress from "@/assets/workout-leg-press.jpg";
+
+import workoutAltCurls from "@/assets/workout-alt-curls.jpg";
+import workoutCablePushdowns from "@/assets/workout-cable-pushdowns.jpg";
+import workoutBarbellCurls from "@/assets/workout-barbell-curls.jpg";
+
+import workout3 from "@/assets/workout-3.jpg";
+import workoutRussianTwists from "@/assets/workout-russian-twists.jpg";
+import workoutHangingLegRaises from "@/assets/workout-hanging-leg-raises.jpg";
+
 import workoutFullBody from "@/assets/workout-fullbody.png";
-import workoutHeavy from "@/assets/workout-heavy.png";
-import workoutDumbbells from "@/assets/workout-dumbbells.png";
-import workoutCables from "@/assets/workout-cables.png";
-import workoutAerobic from "@/assets/workout-aerobic.png";
+import workoutKettlebellFlow from "@/assets/workout-kettlebell-flow.jpg";
+import workoutDumbbellThrusters from "@/assets/workout-dumbbell-thrusters.jpg";
+
+import workoutShoulders from "@/assets/workout-shoulders.png";
+import workoutLateralRaises from "@/assets/workout-lateral-raises.jpg";
+import workoutFacePulls from "@/assets/workout-face-pulls.jpg";
+
+import workoutTriceps from "@/assets/workout-triceps.png";
+import workoutTricepExtension from "@/assets/workout-tricep-extension.jpg";
+import workoutSkullCrushers from "@/assets/workout-skull-crushers.jpg";
+
+import workout4 from "@/assets/workout-4.jpg";
+import workoutPreacherCurls from "@/assets/workout-preacher-curls.jpg";
+import workoutHammerCurls from "@/assets/workout-hammer-curls.jpg";
+
+import workoutFatLoss from "@/assets/workout-fatloss.png";
+import workoutBattleRopes from "@/assets/workout-battle-ropes.jpg";
+import workoutSledPushes from "@/assets/workout-sled-pushes.jpg";
+
+import workoutCardio from "@/assets/workout-cardio.png";
+import workoutJumpRope from "@/assets/workout-jump-rope.jpg";
+import workoutRowing from "@/assets/workout-rowing.jpg";
 
 export type Difficulty = "Beginner" | "Intermediate" | "Advanced";
 
@@ -63,7 +91,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Dumbbell Bench Press",
     difficulty: "Intermediate",
     bodyPart: "Chest",
-    image: workoutDumbbells,
+    image: workoutBenchPress,
     duration: "25 min",
     calories: 200,
     videoUrl: "https://www.youtube.com/embed/VmB1b1CGzQQ",
@@ -75,7 +103,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Cable Crossovers",
     difficulty: "Advanced",
     bodyPart: "Chest",
-    image: workoutCables,
+    image: workoutCableCrossovers,
     duration: "20 min",
     calories: 150,
     videoUrl: "https://www.youtube.com/embed/taI4XduLpTk",
@@ -101,7 +129,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Heavy Deadlifts",
     difficulty: "Advanced",
     bodyPart: "Back",
-    image: workoutHeavy,
+    image: workoutDeadlifts,
     duration: "30 min",
     calories: 350,
     videoUrl: "https://www.youtube.com/embed/op9kVnSso6Q",
@@ -113,7 +141,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Cable Rows",
     difficulty: "Intermediate",
     bodyPart: "Back",
-    image: workoutCables,
+    image: workoutCableRows,
     duration: "20 min",
     calories: 180,
     videoUrl: "https://www.youtube.com/embed/GZbfZ033f74",
@@ -151,7 +179,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Heavy Leg Press",
     difficulty: "Advanced",
     bodyPart: "Legs",
-    image: workoutHeavy,
+    image: workoutLegPress,
     duration: "20 min",
     calories: 300,
     videoUrl: "https://www.youtube.com/embed/IZxyjW7OSvc",
@@ -165,7 +193,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Alternating Dumbbell Curls",
     difficulty: "Beginner",
     bodyPart: "Arms",
-    image: workoutDumbbells,
+    image: workoutAltCurls,
     duration: "15 min",
     calories: 100,
     videoUrl: "https://www.youtube.com/embed/sAq_ocpRh_I",
@@ -177,7 +205,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Cable Pushdowns & Pulls",
     difficulty: "Intermediate",
     bodyPart: "Arms",
-    image: workoutCables,
+    image: workoutCablePushdowns,
     duration: "20 min",
     calories: 150,
     videoUrl: "https://www.youtube.com/embed/2-LAMcpzODU",
@@ -189,7 +217,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Heavy Barbell Curls",
     difficulty: "Advanced",
     bodyPart: "Arms",
-    image: workoutHeavy,
+    image: workoutBarbellCurls,
     duration: "15 min",
     calories: 140,
     videoUrl: "https://www.youtube.com/embed/kwG2ipFRgHA",
@@ -215,7 +243,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Russian Twists",
     difficulty: "Intermediate",
     bodyPart: "Core",
-    image: workoutAerobic,
+    image: workoutRussianTwists,
     duration: "12 min",
     calories: 120,
     videoUrl: "https://www.youtube.com/embed/wkD8rjkodUI",
@@ -227,7 +255,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Hanging Leg Raises",
     difficulty: "Advanced",
     bodyPart: "Core",
-    image: workout5,
+    image: workoutHangingLegRaises,
     duration: "15 min",
     calories: 140,
     videoUrl: "https://www.youtube.com/embed/JB2X4CDEyA",
@@ -253,7 +281,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Kettlebell Flow",
     difficulty: "Intermediate",
     bodyPart: "Full Body",
-    image: workoutAerobic,
+    image: workoutKettlebellFlow,
     duration: "25 min",
     calories: 320,
     videoUrl: "https://www.youtube.com/embed/xH6c_9Z8Zp4",
@@ -265,7 +293,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Dumbbell Thrusters",
     difficulty: "Advanced",
     bodyPart: "Full Body",
-    image: workoutDumbbells,
+    image: workoutDumbbellThrusters,
     duration: "20 min",
     calories: 350,
     videoUrl: "https://www.youtube.com/embed/L219ltL15zk",
@@ -291,7 +319,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Lateral Raises",
     difficulty: "Beginner",
     bodyPart: "Shoulders",
-    image: workoutDumbbells,
+    image: workoutLateralRaises,
     duration: "15 min",
     calories: 100,
     videoUrl: "https://www.youtube.com/embed/Z52PjT-BovI",
@@ -303,7 +331,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Face Pulls",
     difficulty: "Intermediate",
     bodyPart: "Shoulders",
-    image: workoutCables,
+    image: workoutFacePulls,
     duration: "12 min",
     calories: 90,
     videoUrl: "https://www.youtube.com/embed/0QsE0x1_XvI",
@@ -329,7 +357,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Overhead Dumbbell Extension",
     difficulty: "Intermediate",
     bodyPart: "Triceps",
-    image: workoutDumbbells,
+    image: workoutTricepExtension,
     duration: "15 min",
     calories: 100,
     videoUrl: "https://www.youtube.com/embed/nRiJVZDpdL0",
@@ -341,7 +369,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Skull Crushers",
     difficulty: "Advanced",
     bodyPart: "Triceps",
-    image: workoutHeavy,
+    image: workoutSkullCrushers,
     duration: "20 min",
     calories: 150,
     videoUrl: "https://www.youtube.com/embed/d_KZxkY_0cM",
@@ -367,7 +395,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Preacher Curls",
     difficulty: "Intermediate",
     bodyPart: "Biceps",
-    image: workoutHeavy,
+    image: workoutPreacherCurls,
     duration: "15 min",
     calories: 120,
     videoUrl: "https://www.youtube.com/embed/fIWP-FRFNU0",
@@ -379,7 +407,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Hammer Curls",
     difficulty: "Beginner",
     bodyPart: "Biceps",
-    image: workoutDumbbells,
+    image: workoutHammerCurls,
     duration: "12 min",
     calories: 100,
     videoUrl: "https://www.youtube.com/embed/zC3nLlEvin4",
@@ -405,7 +433,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Battle Ropes Circuit",
     difficulty: "Intermediate",
     bodyPart: "Fat Loss",
-    image: workoutAerobic,
+    image: workoutBattleRopes,
     duration: "20 min",
     calories: 300,
     videoUrl: "https://www.youtube.com/embed/VIFxSntNq7I",
@@ -417,7 +445,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Sled Pushes",
     difficulty: "Advanced",
     bodyPart: "Fat Loss",
-    image: workoutHeavy,
+    image: workoutSledPushes,
     duration: "15 min",
     calories: 400,
     videoUrl: "https://www.youtube.com/embed/7V2HwS_dYx4",
@@ -443,7 +471,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Jump Rope Master",
     difficulty: "Beginner",
     bodyPart: "Cardio",
-    image: workoutAerobic,
+    image: workoutJumpRope,
     duration: "15 min",
     calories: 200,
     videoUrl: "https://www.youtube.com/embed/u3zgHI8QnqE",
@@ -455,7 +483,7 @@ export const defaultWorkouts: Workout[] = [
     title: "Distance Rowing",
     difficulty: "Intermediate",
     bodyPart: "Cardio",
-    image: workoutCables,
+    image: workoutRowing,
     duration: "30 min",
     calories: 400,
     videoUrl: "https://www.youtube.com/embed/H0r_ZMhB3RU",
