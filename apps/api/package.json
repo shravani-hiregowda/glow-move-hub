@@ -11,6 +11,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:seed": "tsx prisma/seed.ts",
+    "seed:clients": "tsx src/scripts/seed-production-clients.ts",
     "admin:bootstrap": "tsx src/scripts/bootstrap-admin.ts",
     "media:migrate": "tsx src/scripts/migrate-media.ts",
     "media:rollback": "tsx src/scripts/rollback-media.ts",

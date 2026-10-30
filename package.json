@@ -21,6 +21,7 @@
     "test:api": "npm run test --workspace=@jerai/api",
     "test:e2e": "npm run test:e2e --workspace=@jerai/web",
     "admin:bootstrap": "npm run admin:bootstrap --workspace=@jerai/api",
+    "seed:clients": "npm run seed:clients --workspace=@jerai/api",
     "typecheck": "npm run typecheck --workspace=@jerai/shared && npm run typecheck --workspace=@jerai/api && npm run typecheck --workspace=@jerai/web"
   },
   "devDependencies": {
